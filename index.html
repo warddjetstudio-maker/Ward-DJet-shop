@@ -89,8 +89,15 @@
   .close-x{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;}
   .close-x:hover{color:var(--pink);}
   .window-body{padding:20px;}
-  .p-thumb{width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--surface2);margin-bottom:16px;}
-  .p-thumb img{width:100%;height:100%;object-fit:cover;}
+  .p-thumb{width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--surface2);margin-bottom:16px;position:relative;}
+  .p-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .p-thumb .carousel-arrow{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(16,13,24,0.7);backdrop-filter:blur(4px);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,background .15s;}
+  .p-thumb .carousel-arrow:hover{border-color:var(--pink);background:rgba(16,13,24,0.9);}
+  .p-thumb .carousel-arrow.prev{left:10px;}
+  .p-thumb .carousel-arrow.next{right:10px;}
+  .p-thumb .carousel-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;gap:6px;justify-content:center;}
+  .p-thumb .carousel-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.35);display:block;cursor:pointer;transition:background .15s,transform .15s;}
+  .p-thumb .carousel-dots i.active{background:var(--pink);transform:scale(1.3);}
   .p-title{font-size:22px;margin:0 0 6px;}
   .p-price{font-size:20px;color:var(--gold);font-weight:800;margin:0 0 4px;}
   .p-price-sub{font-size:13px;color:var(--muted);font-weight:500;}
@@ -426,15 +433,26 @@ async function loadProducts(){
         id: sp.id,
         name: sp.name,
         thumbnail: sp.thumbnail_url,
-        variants: variants.map(v => ({
-          id: v.id,
-          name: v.name,
-          size: v.size || "",
-          color: v.color || "",
-          price: parseFloat(v.retail_price || 0),
-          image: (v.files && v.files.find(f => f.type === "preview"))?.preview_url || sp.thumbnail_url,
-          inStock: v.availability_status !== "discontinued"
-        }))
+        variants: variants.map(v => {
+          // toutes les photos utilisables de la variante (mannequin, à plat, dos, etc.)
+          // Printful attache une photo par "type" de mockup (preview, back, flat, model...) —
+          // on prend tout fichier qui a une preview_url, quel que soit son type, dédupliqué.
+          const seen = new Set();
+          let images = (v.files || [])
+            .map(f => f.preview_url)
+            .filter(u => u && !seen.has(u) && seen.add(u));
+          if(images.length === 0) images = [sp.thumbnail_url];
+          return {
+            id: v.id,
+            name: v.name,
+            size: v.size || "",
+            color: v.color || "",
+            price: parseFloat(v.retail_price || 0),
+            images: images,
+            image: images[0],
+            inStock: v.availability_status !== "discontinued"
+          };
+        })
       };
     }).filter(p => p.variants.length > 0);
     renderGrid();
@@ -482,6 +500,7 @@ let currentSizes = [];    // tailles disponibles pour le produit ouvert
 let selectedColor = null;
 let selectedSize = null;
 let currentVariantId = null;
+let currentImageIndex = 0;
 
 const SIZE_ORDER = ["XS","S","M","L","XL","XXL","2XL","3XL","4XL","5XL","6XL"];
 function sortSizes(arr){
@@ -521,6 +540,7 @@ function openProduct(id){
   currentProduct = PRODUCTS.find(p => p.id === id);
   if(!currentProduct) return;
   currentQty = 1;
+  currentImageIndex = 0;
   computeVariantOptions();
   renderProductWindow();
   document.getElementById("productOverlay").classList.add("open");
@@ -559,6 +579,33 @@ function sizeRowHtml(){
   }).join("");
 }
 
+function thumbHtml(v, name){
+  const images = (v.images && v.images.length) ? v.images : [v.image];
+  if(currentImageIndex >= images.length) currentImageIndex = 0;
+  const multi = images.length > 1;
+  const arrows = multi ? `
+    <button type="button" class="carousel-arrow prev" onclick="changeProductImage(-1)" aria-label="Photo précédente">‹</button>
+    <button type="button" class="carousel-arrow next" onclick="changeProductImage(1)" aria-label="Photo suivante">›</button>
+    <div class="carousel-dots">${images.map((_,i) => `<i class="${i===currentImageIndex?"active":""}" onclick="setProductImage(${i})"></i>`).join("")}</div>
+  ` : "";
+  return `<div class="p-thumb" id="pThumb"><img id="pImg" src="${images[currentImageIndex]}" alt="${escapeHtml(name)}">${arrows}</div>`;
+}
+function changeProductImage(delta){
+  const v = currentProduct.variants.find(x => x.id === currentVariantId);
+  const images = (v.images && v.images.length) ? v.images : [v.image];
+  currentImageIndex = (currentImageIndex + delta + images.length) % images.length;
+  refreshThumb(v);
+}
+function setProductImage(i){
+  const v = currentProduct.variants.find(x => x.id === currentVariantId);
+  currentImageIndex = i;
+  refreshThumb(v);
+}
+function refreshThumb(v){
+  const wrap = document.getElementById("pThumb");
+  if(wrap) wrap.outerHTML = thumbHtml(v, currentProduct.name);
+}
+
 function renderProductWindow(){
   const p = currentProduct;
   const body = document.getElementById("productBody");
@@ -593,7 +640,7 @@ function renderProductWindow(){
   }
 
   body.innerHTML = `
-    <div class="p-thumb"><img id="pImg" src="${def.image}" alt="${escapeHtml(p.name)}"></div>
+    ${thumbHtml(def, p.name)}
     <h3 class="p-title">${escapeHtml(p.name)}</h3>
     <p class="p-price" id="pPrice">${(def.price + SHIPPING_FLAT).toFixed(2)} ${CURRENCY}</p>
     <p class="p-included">Livraison incluse · TVA incluse</p>
@@ -644,7 +691,8 @@ function selectSize(s){
 function updateVariantDisplay(){
   const v = currentProduct.variants.find(x => x.id === currentVariantId);
   if(!v) return;
-  document.getElementById("pImg").src = v.image;
+  currentImageIndex = 0;
+  refreshThumb(v);
   document.getElementById("pPrice").textContent = (v.price + SHIPPING_FLAT).toFixed(2) + " " + CURRENCY;
   const addBtn = document.getElementById("addBtn");
   addBtn.disabled = !v.inStock;
