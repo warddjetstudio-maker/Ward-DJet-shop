@@ -426,6 +426,14 @@ async function loadProducts(){
     }
     // détail de chaque produit pour récupérer variantes + prix
     const details = await Promise.all(items.map(p => pfFetch("/store/products/" + p.id).catch(() => null)));
+    // DEBUG TEMPORAIRE : affiche dans la console (F12) la liste brute des fichiers
+    // renvoyés par variante, pour voir précisément quelles photos Printful expose ici.
+    details.filter(Boolean).forEach(d => {
+      const sp = d.result.sync_product;
+      (d.result.sync_variants || []).forEach(v => {
+        console.log(`[DEBUG PHOTOS] ${sp.name} — ${v.color || ""} ${v.size || ""}`, v.files);
+      });
+    });
     PRODUCTS = details.filter(Boolean).map(d => {
       const sp = d.result.sync_product;
       const variants = d.result.sync_variants || [];
