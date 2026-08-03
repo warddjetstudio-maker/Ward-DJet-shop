@@ -434,13 +434,14 @@ async function loadProducts(){
         name: sp.name,
         thumbnail: sp.thumbnail_url,
         variants: variants.map(v => {
-          // toutes les photos utilisables de la variante (mannequin, à plat, dos, etc.)
-          // Printful attache une photo par "type" de mockup (preview, back, flat, model...) —
-          // on prend tout fichier qui a une preview_url, quel que soit son type, dédupliqué.
+          // toutes les photos du produit (mockup de base, mannequin, autres poses…) —
+          // on exclut le fichier "default" qui est le visuel d'impression brut (le design),
+          // pas une photo du vêtement porté/posé.
           const seen = new Set();
           let images = (v.files || [])
+            .filter(f => f.preview_url && f.type !== "default")
             .map(f => f.preview_url)
-            .filter(u => u && !seen.has(u) && seen.add(u));
+            .filter(u => !seen.has(u) && seen.add(u));
           if(images.length === 0) images = [sp.thumbnail_url];
           return {
             id: v.id,
