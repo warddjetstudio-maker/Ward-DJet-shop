@@ -815,23 +815,36 @@ function renderPayPalButtons(total){
 
     createOrder: function(data, actions){
       return actions.order.create({
+        intent: "CAPTURE",
         purchase_units: [{
           amount: { value: total.toFixed(2), currency_code: "EUR" },
           description: "Commande Ward DJet Shop"
-        }]
+        }],
+        // Force PayPal à demander/fournir l'adresse de livraison du client,
+        // indispensable pour créer automatiquement la commande Printful.
+        application_context: { shipping_preference: "GET_FROM_FILE" }
       });
     },
 
     onApprove: function(data, actions){
-      // On garde une copie du panier avant de le vider, pour le récap.
+      // On garde une copie du panier avant de le vider, pour l'envoi à Printful et le récap.
       const orderedItems = CART.slice();
       return actions.order.capture().then(function(details){
-        notifyStudioOfOrder(orderedItems, details);
-        CART = [];
-        updateCartCount();
-        const body = document.getElementById("cartBody");
-        const first = (details.payer && details.payer.name && details.payer.name.given_name) || "";
-        body.innerHTML = `<div class="empty-cart">Merci ${escapeHtml(first)} ! Paiement reçu.<br>Une confirmation te sera envoyée par email.</div>`;
+        return createPrintfulOrder(orderedItems, details)
+          .then(function(pfResult){
+            notifyStudioOfOrder(orderedItems, details, pfResult, null);
+          })
+          .catch(function(err){
+            console.error("Erreur création commande Printful", err);
+            notifyStudioOfOrder(orderedItems, details, null, err.message || String(err));
+          })
+          .then(function(){
+            CART = [];
+            updateCartCount();
+            const body = document.getElementById("cartBody");
+            const first = (details.payer && details.payer.name && details.payer.name.given_name) || "";
+            body.innerHTML = `<div class="empty-cart">Merci ${escapeHtml(first)} ! Paiement reçu, ta commande est en préparation.<br>Une confirmation te sera envoyée par email.</div>`;
+          });
       });
     },
 
@@ -848,14 +861,85 @@ function renderPayPalButtons(total){
   }).render("#paypal-button-container");
 }
 
-// Ouvre un email récap pré-rempli vers le studio, pour que la commande payée
-// soit bien suivie manuellement (le site n'a pas de backend/base de données
-// de commandes). Se déclenche juste après la capture PayPal.
-function notifyStudioOfOrder(items, details){
+// Requête POST générique vers Printful (même proxy CORS que les GET).
+async function pfPost(path, payload){
+  const url = "https://api.printful.com" + path;
+  const target = PUBLIC_PROXY(url);
+  let r;
+  try{
+    r = await fetch(target, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + PRINTFUL_TOKEN,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+  }catch(e){
+    throw new Error("réseau injoignable (" + (e.message || e) + ")");
+  }
+  const data = await r.json().catch(() => null);
+  if(!r.ok || (data && data.error)){
+    const msg = (data && data.error && data.error.message) || ("HTTP " + r.status);
+    throw new Error(msg);
+  }
+  return data;
+}
+
+// Crée automatiquement la commande côté Printful avec l'adresse de livraison
+// fournie par PayPal, et la confirme direct pour fabrication/expédition
+// (confirm:true → débite le Printful Wallet du studio).
+function createPrintfulOrder(items, details){
+  const pu = details.purchase_units && details.purchase_units[0];
+  const shipping = pu && pu.shipping;
+  const addr = shipping && shipping.address;
+  if(!addr){
+    return Promise.reject(new Error("PayPal n'a pas fourni d'adresse de livraison."));
+  }
+  const totalQty = items.reduce((s,c) => s + c.qty, 0);
+  const payload = {
+    recipient: {
+      name: (shipping.name && shipping.name.full_name) ||
+            ((details.payer.name && (details.payer.name.given_name + " " + details.payer.name.surname)).trim()) ||
+            "Client Ward DJet Shop",
+      address1: addr.address_line_1 || "",
+      address2: addr.address_line_2 || "",
+      city: addr.admin_area_2 || "",
+      state_code: addr.admin_area_1 || "",
+      country_code: addr.country_code || "",
+      zip: addr.postal_code || "",
+      email: (details.payer && details.payer.email_address) || undefined
+    },
+    items: items.map(c => ({
+      sync_variant_id: c.variantId,
+      quantity: c.qty,
+      retail_price: Math.max(0, c.price - SHIPPING_FLAT).toFixed(2)
+    })),
+    retail_costs: {
+      shipping: (SHIPPING_FLAT * totalQty).toFixed(2)
+    },
+    external_id: details.id, // lie la commande Printful à la transaction PayPal
+    confirm: true
+  };
+  return pfPost("/orders", payload);
+}
+
+// Ouvre un email récap pré-rempli vers le studio (suivi + filet de sécurité
+// si la création auto côté Printful a échoué). Se déclenche après la capture
+// PayPal, que la commande Printful ait réussi ou non.
+function notifyStudioOfOrder(items, details, pfResult, pfErrorMsg){
   const total = items.reduce((s,c) => s + c.price*c.qty, 0);
   const lines = items.map(c => `- ${c.name} x${c.qty} — ${(c.price*c.qty).toFixed(2)} ${CURRENCY}`).join("%0D%0A");
   const payerEmail = (details.payer && details.payer.email_address) || "non communiqué";
-  const body = `Nouvelle commande payée via PayPal%0D%0A%0D%0A${lines}%0D%0A%0D%0ATotal : ${total.toFixed(2)} ${CURRENCY}%0D%0AEmail payeur : ${payerEmail}%0D%0AID transaction PayPal : ${details.id}`;
+  let pfLine;
+  if(pfResult && pfResult.result){
+    pfLine = `Commande Printful créée et confirmée automatiquement — ID ${pfResult.result.id}, statut ${pfResult.result.status}.`;
+  } else {
+    pfLine = `ATTENTION — la commande Printful n'a PAS pu être créée automatiquement (${pfErrorMsg || "raison inconnue"}). Le paiement PayPal est bien reçu : crée la commande manuellement dans le dashboard Printful avec l'adresse ci-dessous.`;
+  }
+  const addr = details.purchase_units && details.purchase_units[0] && details.purchase_units[0].shipping;
+  const addrLine = addr ? `%0D%0AAdresse : ${(addr.name && addr.name.full_name) || ""}, ${addr.address && addr.address.address_line_1 || ""} ${addr.address && addr.address.address_line_2 || ""}, ${addr.address && addr.address.postal_code || ""} ${addr.address && addr.address.admin_area_2 || ""}, ${addr.address && addr.address.country_code || ""}` : "";
+  const body = `Nouvelle commande payée via PayPal%0D%0A%0D%0A${lines}%0D%0A%0D%0ATotal : ${total.toFixed(2)} ${CURRENCY}%0D%0AEmail payeur : ${payerEmail}%0D%0AID transaction PayPal : ${details.id}${addrLine}%0D%0A%0D%0A${pfLine}`;
   const link = document.createElement("a");
   link.href = `mailto:${STUDIO_EMAIL}?subject=${encodeURIComponent("Nouvelle commande PayPal — Ward DJet Shop")}&body=${body}`;
   link.target = "_blank";
