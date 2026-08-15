@@ -211,6 +211,11 @@
   .contact-form textarea{min-height:130px;}
   .contact-form .field label{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
   .send-note{font-size:12px;color:var(--muted);text-align:center;margin-top:14px;}
+  .order-review-notice{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:16px;font-size:13px;line-height:1.5;color:var(--text);}
+  .order-review-notice strong{display:block;margin-bottom:4px;}
+  .review-checkbox{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;}
+  .review-checkbox input{width:16px;height:16px;accent-color:var(--accent,#fff);cursor:pointer;}
+  #paypal-button-container.locked{opacity:.35;pointer-events:none;filter:grayscale(1);}
 </style>
 </head>
 <body>
@@ -791,10 +796,26 @@ function renderCartWindow(){
     <div class="cart-total-row"><span>Livraison</span><span>incluse</span></div>
     <div class="cart-total-row"><span>TVA</span><span>incluse</span></div>
     <div class="cart-total-row big"><span>Total</span><span>${total.toFixed(2)} ${CURRENCY}</span></div>
-    <div id="paypal-button-container" style="margin-top:14px;"></div>
+    <div class="order-review-notice">
+      <strong>Avant de payer</strong>
+      Chaque commande est vérifiée manuellement par le studio avant d'être envoyée en fabrication. Ça peut donc prendre un peu plus de temps que prévu, mais ça garantit que tout est correct avant impression.
+      <label class="review-checkbox">
+        <input type="checkbox" id="reviewAck" onchange="onReviewAckChange()">
+        J'ai compris
+      </label>
+    </div>
+    <div id="paypal-button-container" class="locked" style="margin-top:14px;"></div>
     <p class="send-note" id="paypalNote"></p>
   `;
   renderPayPalButtons(total);
+}
+
+// La case "J'ai compris" doit être cochée avant de pouvoir utiliser le bouton PayPal.
+function onReviewAckChange(){
+  const checked = document.getElementById("reviewAck").checked;
+  const container = document.getElementById("paypal-button-container");
+  if(!container) return;
+  container.classList.toggle("locked", !checked);
 }
 
 /* ================= PAIEMENT PAYPAL ================= */
@@ -827,35 +848,20 @@ function renderPayPalButtons(total){
     },
 
     onApprove: function(data, actions){
-      // On garde une copie du panier avant de le vider, pour l'envoi à Printful et le récap.
+      // On garde une copie du panier avant de le vider, pour le récap envoyé au studio.
       const orderedItems = CART.slice();
       return actions.order.capture().then(function(details){
-        return createPrintfulOrder(orderedItems, details)
-          .then(function(pfResult){
-            return getDeliveryEstimate(orderedItems, details)
-              .then(function(estimate){
-                notifyStudioOfOrder(orderedItems, details, pfResult, null, estimate);
-                return estimate;
-              })
-              .catch(function(){
-                notifyStudioOfOrder(orderedItems, details, pfResult, null, null);
-                return null;
-              });
-          })
-          .catch(function(err){
-            console.error("Erreur création commande Printful", err);
-            notifyStudioOfOrder(orderedItems, details, null, err.message || String(err), null);
-            return null;
-          })
+        // Pas de création automatique côté Printful : chaque commande est
+        // vérifiée manuellement par le studio avant d'être envoyée en fabrication.
+        return getDeliveryEstimate(orderedItems, details)
+          .catch(function(){ return null; })
           .then(function(estimate){
+            notifyStudioOfOrder(orderedItems, details, estimate);
             CART = [];
             updateCartCount();
             const body = document.getElementById("cartBody");
             const first = (details.payer && details.payer.name && details.payer.name.given_name) || "";
-            const delivLine = estimate
-              ? `<br>Livraison estimée entre le ${formatDeliveryDate(estimate.min_delivery_date)} et le ${formatDeliveryDate(estimate.max_delivery_date)}.`
-              : "";
-            body.innerHTML = `<div class="empty-cart">Merci ${escapeHtml(first)} ! Paiement reçu, ta commande est en préparation.<br>Une confirmation te sera envoyée par email.${delivLine}</div>`;
+            body.innerHTML = `<div class="empty-cart">Merci ${escapeHtml(first)} ! Paiement reçu.<br>Ta commande va être vérifiée manuellement par le studio avant fabrication — tu recevras une confirmation par email.</div>`;
           });
       });
     },
@@ -918,31 +924,6 @@ function buildRecipientFromPayPal(details){
   };
 }
 
-// Crée automatiquement la commande côté Printful avec l'adresse de livraison
-// fournie par PayPal, et la confirme direct pour fabrication/expédition
-// (confirm:true → débite le Printful Wallet du studio).
-function createPrintfulOrder(items, details){
-  const recipient = buildRecipientFromPayPal(details);
-  if(!recipient){
-    return Promise.reject(new Error("PayPal n'a pas fourni d'adresse de livraison."));
-  }
-  const totalQty = items.reduce((s,c) => s + c.qty, 0);
-  const payload = {
-    recipient: recipient,
-    items: items.map(c => ({
-      sync_variant_id: c.variantId,
-      quantity: c.qty,
-      retail_price: Math.max(0, c.price - SHIPPING_FLAT).toFixed(2)
-    })),
-    retail_costs: {
-      shipping: (SHIPPING_FLAT * totalQty).toFixed(2)
-    },
-    external_id: details.id, // lie la commande Printful à la transaction PayPal
-    confirm: true
-  };
-  return pfPost("/orders", payload);
-}
-
 // Demande à Printful une fourchette de dates de livraison précise pour
 // l'adresse du client. Renvoie {min_delivery_date, max_delivery_date} ou null.
 function getDeliveryEstimate(items, details){
@@ -975,25 +956,19 @@ function formatDeliveryDate(iso){
   return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
 }
 
-// Ouvre un email récap pré-rempli vers le studio (suivi + filet de sécurité
-// si la création auto côté Printful a échoué). Se déclenche après la capture
-// PayPal, que la commande Printful ait réussi ou non.
-function notifyStudioOfOrder(items, details, pfResult, pfErrorMsg, estimate){
+// Ouvre un email récap pré-rempli vers le studio avec tout ce qu'il faut pour
+// créer la commande manuellement dans Printful après vérification.
+// Se déclenche juste après la capture du paiement PayPal.
+function notifyStudioOfOrder(items, details, estimate){
   const total = items.reduce((s,c) => s + c.price*c.qty, 0);
   const lines = items.map(c => `- ${c.name} x${c.qty} — ${(c.price*c.qty).toFixed(2)} ${CURRENCY}`).join("%0D%0A");
   const payerEmail = (details.payer && details.payer.email_address) || "non communiqué";
-  let pfLine;
-  if(pfResult && pfResult.result){
-    pfLine = `Commande Printful créée et confirmée automatiquement — ID ${pfResult.result.id}, statut ${pfResult.result.status}.`;
-  } else {
-    pfLine = `ATTENTION — la commande Printful n'a PAS pu être créée automatiquement (${pfErrorMsg || "raison inconnue"}). Le paiement PayPal est bien reçu : crée la commande manuellement dans le dashboard Printful avec l'adresse ci-dessous.`;
-  }
   const estimLine = estimate
     ? `%0D%0ALivraison estimée : entre le ${estimate.min_delivery_date} et le ${estimate.max_delivery_date}.`
     : "";
   const addr = details.purchase_units && details.purchase_units[0] && details.purchase_units[0].shipping;
   const addrLine = addr ? `%0D%0AAdresse : ${(addr.name && addr.name.full_name) || ""}, ${addr.address && addr.address.address_line_1 || ""} ${addr.address && addr.address.address_line_2 || ""}, ${addr.address && addr.address.postal_code || ""} ${addr.address && addr.address.admin_area_2 || ""}, ${addr.address && addr.address.country_code || ""}` : "";
-  const body = `Nouvelle commande payée via PayPal%0D%0A%0D%0A${lines}%0D%0A%0D%0ATotal : ${total.toFixed(2)} ${CURRENCY}%0D%0AEmail payeur : ${payerEmail}%0D%0AID transaction PayPal : ${details.id}${addrLine}${estimLine}%0D%0A%0D%0A${pfLine}`;
+  const body = `Nouvelle commande payée via PayPal — À CRÉER DANS PRINTFUL%0D%0A%0D%0A${lines}%0D%0A%0D%0ATotal : ${total.toFixed(2)} ${CURRENCY}%0D%0AEmail payeur : ${payerEmail}%0D%0AID transaction PayPal : ${details.id}${addrLine}${estimLine}`;
   const link = document.createElement("a");
   link.href = `mailto:${STUDIO_EMAIL}?subject=${encodeURIComponent("Nouvelle commande PayPal — Ward DJet Shop")}&body=${body}`;
   link.target = "_blank";
