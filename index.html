@@ -1,4 +1,41 @@
 <!DOCTYPE html>
+<!--
+=== CODE DU PROXY (Cloudflare Worker) — à copier-coller dans Cloudflare, pas utilisé par la page ===
+// Cloudflare Worker — proxy Printful (lecture seule du catalogue)
+// Secrets à définir : PRINTFUL_TOKEN  (et optionnel : STORE_ID si token de niveau "compte")
+// Variable optionnelle : ALLOWED_ORIGIN (ex. https://ton-site.com) — par défaut "*"
+
+export default {
+  async fetch(request, env) {
+    const origin = env.ALLOWED_ORIGIN || "*";
+    const cors = {
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    };
+
+    if (request.method === "OPTIONS") return new Response(null, { headers: cors });
+    if (request.method !== "GET")
+      return new Response(JSON.stringify({ error: "Méthode non autorisée" }), { status: 405, headers: cors });
+
+    const url = new URL(request.url);
+    // Seules les routes catalogue sont autorisées
+    if (!/^\/store\/products(\/\d+)?$/.test(url.pathname))
+      return new Response(JSON.stringify({ error: "Route non autorisée" }), { status: 403, headers: { ...cors, "Content-Type": "application/json" } });
+
+    const headers = { Authorization: "Bearer " + env.PRINTFUL_TOKEN };
+    if (env.STORE_ID) headers["X-PF-Store-Id"] = env.STORE_ID;
+
+    const res = await fetch("https://api.printful.com" + url.pathname + url.search, { headers });
+    const body = await res.text();
+    return new Response(body, {
+      status: res.status,
+      headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=300" },
+    });
+  },
+};
+
+-->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -157,23 +194,13 @@ footer{background:var(--nav);color:#b9b2d3;text-align:center;padding:30px 20px;f
 
 <script>
 /* ================= CONFIGURATION ================= */
-const PRINTFUL_TOKEN = "UDU9tetkTzbrGmYCA4Hz8dAMFTePb2RHJlvDOC5d";
+// URL de ton proxy Cloudflare Worker (voir worker.js). Le token Printful reste côté serveur, jamais dans ce fichier.
+const PROXY_URL = "https://REMPLACE-MOI.workers.dev";
+// Catalogue manuel de secours : si tu ne veux pas de proxy, colle ici tes produits (même format que ci-dessous).
+// Exemple : [{id:1,name:"T-shirt",thumbnail:"https://...",variants:[{id:11,name:"T-shirt / M",size:"M",color:"Noir",price:24.9,image:"https://...",inStock:true}]}]
+const STATIC_PRODUCTS = [];
 const SHIPPING_FLAT = 4.90;
 const CURRENCY = "€";
-// Sans clé corsproxy.io, l'appel ne marche qu'en local. Ajoute ta clé une fois le site en ligne.
-const CORSPROXY_KEY = "";
-// Si ton token est de niveau "compte" (et non "boutique"), mets l'ID de ta boutique Printful ici.
-const STORE_ID = "";
-const K = CORSPROXY_KEY ? "&key=" + CORSPROXY_KEY : "";
-// Essaie en cascade : appel direct, puis plusieurs proxys CORS publics (le premier qui répond est mémorisé).
-const ROUTES = [
-  u => u,
-  u => "https://corsproxy.io/?url=" + encodeURIComponent(u) + K,
-  u => "https://corsproxy.io/?" + encodeURIComponent(u) + (CORSPROXY_KEY ? "&key=" + CORSPROXY_KEY : ""),
-  u => "https://thingproxy.freeboard.io/fetch/" + u,
-  u => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u)
-];
-let goodRoute = null;
 
 let PRODUCTS = [], CART = [], lastFetchError = "";
 
@@ -183,31 +210,29 @@ function priceHtml(n){const [i,d]=n.toFixed(2).split(".");return `<span class="p
 
 /* ================= PRINTFUL ================= */
 async function pfFetch(path){
-  const target = "https://api.printful.com" + path;
-  const headers = { Authorization: "Bearer " + PRINTFUL_TOKEN };
-  if(STORE_ID) headers["X-PF-Store-Id"] = STORE_ID;
-  const order = goodRoute ? [goodRoute, ...ROUTES.filter(r => r !== goodRoute)] : ROUTES;
-  const errs = [];
-  for(const mk of order){
-    try{
-      const r = await fetch(mk(target), { headers });
-      if(!r.ok){
-        let d = ""; try{ const j = await r.clone().json(); d = (j.error && (j.error.message || j.error)) || j.message || ""; }catch(_){}
-        errs.push("HTTP " + r.status + (d ? " " + d : "")); continue;
-      }
-      const data = await r.json();
-      if(data && data.error){ errs.push(data.error.message || JSON.stringify(data.error)); continue; }
-      if(!data || data.result === undefined){ errs.push("réponse inattendue"); continue; }
-      goodRoute = mk;
-      return data;
-    }catch(e){ errs.push(e.message || String(e)); }
+  if(PROXY_URL.includes("REMPLACE-MOI")){
+    lastFetchError = "PROXY_URL non configuré (déploie worker.js puis colle son URL dans le fichier)";
+    throw new Error(lastFetchError);
   }
-  lastFetchError = "toutes les routes ont échoué — " + [...new Set(errs)].slice(0,3).join(" | ");
-  throw new Error(lastFetchError);
+  try{
+    const r = await fetch(PROXY_URL.replace(/\/$/,"") + path);
+    const data = await r.json().catch(()=>null);
+    if(!r.ok || !data || data.error){
+      const d = data && data.error ? (data.error.message || data.error) : "";
+      lastFetchError = "HTTP " + r.status + (d ? " — " + d : "");
+      throw new Error(lastFetchError);
+    }
+    if(data.result === undefined){ lastFetchError = "réponse inattendue"; throw new Error(lastFetchError); }
+    return data;
+  }catch(e){
+    lastFetchError = lastFetchError || e.message || String(e);
+    throw new Error(e.message || lastFetchError);
+  }
 }
 
 async function loadProducts(){
   $("grid").innerHTML='<div class="msg"><div class="spin"></div>Chargement de la collection…</div>';
+  if(PROXY_URL.includes("REMPLACE-MOI") && STATIC_PRODUCTS.length){ PRODUCTS = STATIC_PRODUCTS; renderGrid(); return; }
   try{
     const list = await pfFetch("/store/products");
     const items = (list && list.result) || [];
@@ -224,7 +249,7 @@ async function loadProducts(){
     renderGrid();
   }catch(e){
     try{ const c = JSON.parse(localStorage.getItem("wds_products")||"null"); if(c && c.length){ PRODUCTS = c; renderGrid(); return; } }catch(_){}
-    $("grid").innerHTML='<div class="msg err">Impossible de charger le catalogue Printful.<br><small>'+escapeHtml(e.message||lastFetchError||"erreur inconnue")+'</small><br><br>Vérifie le token et que la boutique contient des produits synchronisés.</div>';
+    $("grid").innerHTML='<div class="msg err">Impossible de charger le catalogue Printful.<br><small>'+escapeHtml(e.message||lastFetchError||"erreur inconnue")+'</small><br><br>Vérifie l'URL du proxy, le token du Worker et que la boutique contient des produits synchronisés.</div>';
     $("countLabel").textContent="";
   }
 }
