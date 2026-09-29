@@ -4,1108 +4,375 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ward DJet Shop</title>
-<!-- SDK PayPal — client-id public, sûr à exposer côté navigateur -->
-<script src="https://www.paypal.com/sdk/js?client-id=ASRR9P2QT6Hoo6uSX8awae3WvNYB-TxqXfcprQwefKYwkTa0gnq745GiFck8zGrZ4ztgTM1hTjZimWxC&currency=EUR"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#100D18;
-    --surface:#1B1729;
-    --surface2:#241E38;
-    --line:#332B4D;
-    --text:#F3F0FA;
-    --muted:#948DB0;
-    --pink:#FF3E7F;
-    --pink-dim:#7A1E3D;
-    --gold:#F5A623;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;}
-  h1,h2,h3,.display{font-family:'Archivo Black','Arial Black',sans-serif;letter-spacing:0.5px;}
-  a{color:inherit;}
+:root{--nav:#1B1729;--nav2:#2A2245;--pink:#FF3E7F;--pinkd:#E02A68;--bg:#F3F2F7;--card:#fff;--ink:#1A1626;--muted:#6B6580;--line:#E2DFEA;--ok:#0B8A4B;--gold:#F5A623}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:15px}
+button{font:inherit;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.pr b{font-size:1.5em;font-weight:600}.pr sup{font-size:.7em;font-weight:600;margin:0 2px 0 1px}
 
-  /* --- header --- */
-  header{position:sticky;top:0;z-index:40;background:rgba(16,13,24,0.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
-  .headwrap{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;}
-  .logo{display:flex;align-items:center;gap:10px;font-size:20px;text-transform:uppercase;}
-  .logo .dot{width:10px;height:10px;border-radius:50%;background:var(--pink);box-shadow:0 0 12px var(--pink);}
-  .cart-btn{background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:10px 18px;border-radius:999px;cursor:pointer;font-size:14px;display:flex;gap:8px;align-items:center;}
-  .cart-btn:hover{border-color:var(--pink);}
-  .cart-count{background:var(--pink);color:#1a0812;font-weight:800;border-radius:999px;padding:1px 8px;font-size:12px;}
+/* header */
+header{background:var(--nav);color:#fff;position:sticky;top:0;z-index:50}
+.top{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:10px 20px}
+.logo{font-family:'Archivo Black',sans-serif;font-size:20px;white-space:nowrap;cursor:pointer;display:flex;align-items:center;gap:9px;background:none;border:0;color:#fff;padding:6px 4px}
+.logo i{width:12px;height:12px;border-radius:50%;background:var(--pink);display:block}
+.search{flex:1;display:flex;max-width:720px}
+.search input{flex:1;min-width:0;border:0;border-radius:8px 0 0 8px;padding:11px 14px;font:inherit;background:#fff;color:var(--ink)}
+.search button{border:0;background:var(--pink);color:#fff;width:52px;border-radius:0 8px 8px 0;display:flex;align-items:center;justify-content:center}
+.search button:hover{background:var(--pinkd)}
+.cart-btn{background:none;border:1px solid transparent;color:#fff;display:flex;align-items:flex-end;gap:6px;padding:6px 10px;border-radius:8px;font-weight:600;position:relative}
+.cart-btn:hover{border-color:#fff5}
+.cart-btn .n{position:absolute;top:-4px;left:22px;background:var(--pink);border-radius:999px;font-size:12px;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.sub{background:var(--nav2)}
+.sub div{max-width:1400px;margin:0 auto;padding:8px 20px;font-size:13px;display:flex;gap:22px;color:#d8d3ea;flex-wrap:wrap}
 
-  /* --- ticker --- */
-  .ticker{overflow:hidden;white-space:nowrap;border-bottom:1px solid var(--line);background:var(--surface);padding:8px 0;}
-  .ticker span{display:inline-block;padding-right:40px;font-size:13px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
-  .ticker-track{display:inline-block;animation:scroll 22s linear infinite;}
-  @keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+/* layout */
+main{max-width:1400px;margin:0 auto;padding:20px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;margin-bottom:16px;flex-wrap:wrap}
+.bar h1{font-size:16px;margin:0;font-weight:600}.bar span{color:var(--muted);font-size:14px}
+.bar select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;background:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:box-shadow .2s}
+.card:hover{box-shadow:0 6px 22px #1b17291f}
+.card .th{aspect-ratio:1;background:#fafafc;display:flex;align-items:center;justify-content:center;padding:10px}
+.card img{max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:multiply}
+.card .in{padding:12px 14px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.card .nm{font-weight:500;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .from{color:var(--muted);font-size:12px}
+.card .pr{font-size:15px}
+.card .ship{font-size:12px;color:var(--ok);font-weight:500}
+.dots{display:flex;gap:4px;align-items:center}
+.dots i{width:12px;height:12px;border-radius:50%;border:1px solid #0003;display:block}
+.dots small{color:var(--muted);font-size:12px;margin-left:2px}
+.msg{grid-column:1/-1;text-align:center;color:var(--muted);padding:70px 20px}
+.msg.err{color:#c0392b}
+.spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--pink);margin:0 auto 14px;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
 
-  /* --- hero --- */
-  .hero{max-width:1100px;margin:0 auto;padding:64px 24px 40px;text-align:center;}
-  .hero h1{font-size:clamp(38px,7vw,72px);margin:0 0 12px;line-height:0.95;}
-  .hero h1 .accent{color:var(--pink);}
-  .hero p{color:var(--muted);font-size:16px;max-width:520px;margin:0 auto 28px;}
-  .bars{display:flex;gap:5px;justify-content:center;align-items:flex-end;height:44px;margin:0 auto 28px;}
-  .bars i{display:block;width:5px;background:linear-gradient(180deg,var(--pink),var(--gold));border-radius:2px;animation:eq 1.1s ease-in-out infinite;}
-  .bars i:nth-child(1){animation-delay:0s;height:14px;}
-  .bars i:nth-child(2){animation-delay:0.1s;height:30px;}
-  .bars i:nth-child(3){animation-delay:0.2s;height:44px;}
-  .bars i:nth-child(4){animation-delay:0.3s;height:22px;}
-  .bars i:nth-child(5){animation-delay:0.4s;height:36px;}
-  .bars i:nth-child(6){animation-delay:0.5s;height:18px;}
-  .bars i:nth-child(7){animation-delay:0.6s;height:28px;}
-  @keyframes eq{0%,100%{transform:scaleY(0.4);}50%{transform:scaleY(1);}}
-  .badge-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
-  .badge{border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:12px;padding:6px 14px;border-radius:999px;text-transform:uppercase;letter-spacing:1px;}
-  .badge b{color:var(--gold);}
+/* product page */
+.back{background:none;border:0;color:var(--muted);padding:0 0 12px;font-size:14px}.back:hover{color:var(--pinkd);text-decoration:underline}
+.pp{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) 300px;gap:24px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;align-items:start}
+.gal{display:flex;gap:12px}
+.thumbs{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow:auto}
+.thumbs button{width:58px;height:58px;padding:2px;border:1px solid var(--line);border-radius:8px;background:#fafafc}
+.thumbs button.on{border:2px solid var(--pink)}
+.thumbs img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
+.main-img{flex:1;background:#fafafc;border-radius:10px;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.main-img img{max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:multiply}
+.pp h2{font-size:24px;line-height:1.25;margin:0 0 10px;font-weight:600}
+.pp hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.big{font-size:22px}.big b{font-size:1.6em}
+.sm{color:var(--muted);font-size:13px;margin:4px 0 0}
+.lab{font-size:13px;color:var(--muted);margin:0 0 8px}.lab b{color:var(--ink)}
+.field{margin-bottom:18px}
+.colors,.sizes{display:flex;flex-wrap:wrap;gap:10px}
+.sw{width:34px;height:34px;border-radius:50%;border:1px solid #0003;padding:0;position:relative}
+.sw.sel{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--pink)}
+.sw.oos{opacity:.3}
+.sz{min-width:48px;height:38px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:#fff;font-weight:600}
+.sz:hover{border-color:var(--pink)}.sz.sel{border:2px solid var(--pink);background:#fff0f5}
+.sz.oos{opacity:.4;text-decoration:line-through}
+select.v{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit}
+.buy{border:1px solid var(--line);border-radius:12px;padding:18px;position:sticky;top:130px}
+.buy .stock{color:var(--ok);font-size:17px;font-weight:600;margin:10px 0}.buy .stock.oos{color:#c0392b}
+.buy label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+.buy select{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-bottom:14px}
+.btn{width:100%;border:0;border-radius:999px;padding:12px;font-weight:600;font-size:15px;margin-bottom:10px}
+.btn.p{background:var(--pink);color:#fff}.btn.p:hover{background:var(--pinkd)}
+.btn.d{background:var(--nav);color:#fff}.btn.d:hover{background:var(--nav2)}
+.btn:disabled{background:var(--line);color:var(--muted);cursor:not-allowed}
+.meta{font-size:13px;color:var(--muted);display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:6px}.meta b{color:var(--ink);font-weight:500}
 
-  /* --- grid --- */
-  main{max-width:1100px;margin:0 auto;padding:20px 24px 100px;}
-  .section-title{display:flex;align-items:baseline;justify-content:space-between;margin:20px 0;}
-  .section-title h2{font-size:22px;margin:0;}
-  .section-title span{color:var(--muted);font-size:13px;}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .18s,border-color .18s;}
-  .card:hover{transform:translateY(-4px);border-color:var(--pink);}
-  .card .thumb{width:100%;aspect-ratio:1/1;background:var(--surface2);display:flex;align-items:center;justify-content:center;overflow:hidden;}
-  .card .thumb img{width:100%;height:100%;object-fit:cover;}
-  .card .info{padding:14px;}
-  .card .name{font-size:14px;font-weight:600;margin:0 0 6px;line-height:1.3;}
-  .card .price{color:var(--gold);font-weight:700;font-size:15px;}
-  .card .tag{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;}
+/* cart drawer */
+.ov{position:fixed;inset:0;background:#0b081666;z-index:100;display:none;justify-content:flex-end}
+.ov.open{display:flex}
+.drawer{background:#fff;width:min(440px,100%);height:100%;display:flex;flex-direction:column;animation:sl .22s ease-out}
+@keyframes sl{from{transform:translateX(40px);opacity:0}}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dh h3{margin:0;font-size:18px}.dh button{background:none;border:0;font-size:26px;line-height:1;color:var(--muted)}
+.db{flex:1;overflow:auto;padding:0 20px}
+.ci{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+.ci img{width:84px;height:84px;object-fit:contain;background:#fafafc;border-radius:8px;mix-blend-mode:multiply}
+.ci .t{flex:1;min-width:0}.ci p{margin:0 0 6px;font-size:14px}.ci .nm{font-weight:500}
+.q{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.q button{background:#fff;border:0;width:30px;height:28px}.q button:hover{background:var(--bg)}.q span{min-width:26px;text-align:center;font-size:14px}
+.rm{background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline;margin-left:10px}.rm:hover{color:#c0392b}
+.df{padding:18px 20px;border-top:1px solid var(--line)}
+.tot{display:flex;justify-content:space-between;font-size:18px;font-weight:600;margin-bottom:12px}
+.empty{text-align:center;color:var(--muted);padding:60px 0}
+footer{background:var(--nav);color:#b9b2d3;text-align:center;padding:30px 20px;font-size:13px;margin-top:30px}
 
-  .state-msg{color:var(--muted);text-align:center;padding:60px 20px;font-size:14px;}
-  .state-msg.error{color:#ff8484;}
-  .spinner{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--pink);margin:0 auto 14px;animation:spin 0.8s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-
-  /* --- windows / modals --- */
-  .overlay{position:fixed;inset:0;background:rgba(8,6,14,0.75);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;}
-  .overlay.open{display:flex;}
-  .window{background:var(--surface);border:1px solid var(--line);border-radius:16px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;position:relative;}
-  .window-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);}
-  .window-bar .dots{display:flex;gap:6px;}
-  .window-bar .dots i{width:10px;height:10px;border-radius:50%;display:block;}
-  .window-bar .dots i:nth-child(1){background:#FF5F57;}
-  .window-bar .dots i:nth-child(2){background:#FEBC2E;}
-  .window-bar .dots i:nth-child(3){background:#28C840;}
-  .window-bar .title{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
-  .close-x{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;}
-  .close-x:hover{color:var(--pink);}
-  .window-body{padding:20px;}
-  .p-thumb{width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--surface2);margin-bottom:16px;position:relative;}
-  .p-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
-  .p-thumb .carousel-arrow{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(16,13,24,0.7);backdrop-filter:blur(4px);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,background .15s;}
-  .p-thumb .carousel-arrow:hover{border-color:var(--pink);background:rgba(16,13,24,0.9);}
-  .p-thumb .carousel-arrow.prev{left:10px;}
-  .p-thumb .carousel-arrow.next{right:10px;}
-  .p-thumb .carousel-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;gap:6px;justify-content:center;}
-  .p-thumb .carousel-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.35);display:block;cursor:pointer;transition:background .15s,transform .15s;}
-  .p-thumb .carousel-dots i.active{background:var(--pink);transform:scale(1.3);}
-  .p-title{font-size:22px;margin:0 0 6px;}
-  .p-price{font-size:20px;color:var(--gold);font-weight:800;margin:0 0 4px;}
-  .p-price-sub{font-size:13px;color:var(--muted);font-weight:500;}
-  .p-included{font-size:12px;color:var(--muted);margin:0 0 18px;text-transform:uppercase;letter-spacing:1px;}
-  .field{margin-bottom:16px;}
-  .field label{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-  .field label .val{color:var(--text);text-transform:none;letter-spacing:0;font-weight:600;}
-  select{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:14px;}
-
-  /* couleur */
-  .color-row{display:flex;flex-wrap:wrap;gap:12px;}
-  .color-swatch{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0;position:relative;box-shadow:inset 0 0 0 2px rgba(0,0,0,0.15);transition:transform .15s,border-color .15s;}
-  .color-swatch:hover{transform:scale(1.08);}
-  .color-swatch.selected{border-color:var(--pink);box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--pink),inset 0 0 0 2px rgba(0,0,0,0.15);}
-  .color-swatch.selected::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;text-shadow:0 0 3px rgba(0,0,0,0.8);}
-  .color-swatch.oos{opacity:0.3;}
-
-  /* taille */
-  .size-row{display:flex;flex-wrap:wrap;gap:8px;}
-  .size-btn{min-width:46px;height:40px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:border-color .15s,background .15s,color .15s;}
-  .size-btn:hover{border-color:var(--pink);}
-  .size-btn.selected{background:var(--pink);border-color:var(--pink);color:#1a0812;}
-  .size-btn.oos{opacity:0.35;text-decoration:line-through;cursor:not-allowed;}
-  .stock-note{font-size:12px;margin:8px 0 0;color:var(--muted);}
-  .stock-note.oos{color:#ff8484;}
-  .qty-row{display:flex;align-items:center;gap:12px;}
-  .qty-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;}
-  .qty-btn:hover{border-color:var(--pink);}
-  .add-btn{width:100%;background:var(--pink);color:#1a0812;border:none;padding:15px;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:6px;}
-  .add-btn:hover{background:#ff5c8f;}
-  .add-btn:disabled{background:var(--line);color:var(--muted);cursor:not-allowed;}
-
-  /* cart window */
-  .cart-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);}
-  .cart-item img{width:56px;height:56px;border-radius:8px;object-fit:cover;background:var(--surface2);}
-  .cart-item .ci-info{flex:1;}
-  .cart-item .ci-name{font-size:13px;margin:0 0 4px;}
-  .cart-item .ci-meta{font-size:12px;color:var(--muted);margin:0 0 6px;}
-  .cart-item .ci-price{font-size:13px;color:var(--gold);font-weight:700;}
-  .cart-item .ci-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;text-decoration:underline;}
-  .cart-item .ci-remove:hover{color:#ff8484;}
-  .cart-total-row{display:flex;justify-content:space-between;padding:14px 0;font-size:14px;color:var(--muted);}
-  .cart-total-row.big{font-size:19px;color:var(--text);font-weight:800;border-top:1px solid var(--line);margin-top:8px;padding-top:16px;}
-  .empty-cart{text-align:center;color:var(--muted);padding:40px 0;font-size:14px;}
-
-  footer{border-top:1px solid var(--line);padding:30px 24px;text-align:center;color:var(--muted);font-size:12px;}
-
-  /* --- nav studio --- */
-  .headwrap{gap:20px;flex-wrap:wrap;}
-  nav.mainnav{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:4px;}
-  nav.mainnav button{background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;transition:background .15s,color .15s;}
-  nav.mainnav button:hover{color:var(--text);}
-  nav.mainnav button.active{background:var(--pink);color:#1a0812;}
-
-  .page{display:none;}
-  .page.active{display:block;}
-
-  /* --- accueil studio --- */
-  .studio-hero{max-width:900px;margin:0 auto;padding:70px 24px 40px;text-align:center;}
-  .studio-hero .stamp{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:12px;padding:6px 16px;border-radius:999px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:22px;}
-  .studio-hero .stamp .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px var(--gold);}
-  .studio-hero h1{font-size:clamp(34px,6vw,58px);line-height:1.02;margin:0 0 16px;}
-  .studio-hero h1 .accent{color:var(--pink);}
-  .studio-hero p.lead{color:var(--muted);font-size:16px;max-width:560px;margin:0 auto 30px;line-height:1.6;}
-  .studio-cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:60px;}
-  .studio-cta{padding:14px 28px;border-radius:999px;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:1px;cursor:pointer;border:1px solid var(--line);background:var(--surface2);color:var(--text);transition:border-color .15s,transform .15s;}
-  .studio-cta:hover{transform:translateY(-2px);border-color:var(--pink);}
-  .studio-cta.primary{background:var(--pink);border-color:var(--pink);color:#1a0812;}
-  .studio-cta.primary:hover{background:#ff5c8f;}
-
-  .pillars{max-width:1100px;margin:0 auto 90px;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;}
-  .pillar{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px 22px;transition:border-color .15s,transform .15s;}
-  .pillar:hover{border-color:var(--pink);transform:translateY(-3px);}
-  .pillar .picto{width:38px;height:38px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:14px;}
-  .pillar h3{margin:0 0 8px;font-size:16px;}
-  .pillar p{margin:0;color:var(--muted);font-size:13px;line-height:1.6;}
-  .pillar .go{display:inline-block;margin-top:14px;font-size:12px;color:var(--pink);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;}
-  .pillar .go:hover{text-decoration:underline;}
-
-  .brands-strip{max-width:1100px;margin:0 auto 90px;padding:0 24px;}
-  .brands-strip .bs-title{text-align:center;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:2px;margin-bottom:22px;}
-  .brands-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
-  .brand-chip{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:18px 26px;text-align:center;min-width:160px;}
-  .brand-chip .bname{font-family:'Archivo Black','Arial Black',sans-serif;font-size:16px;margin-bottom:4px;}
-  .brand-chip .bdesc{color:var(--muted);font-size:12px;}
-
-  /* --- page jeux --- */
-  .games-wrap{max-width:1100px;margin:0 auto;padding:70px 24px 100px;text-align:center;}
-  .games-wrap h1{font-size:clamp(30px,5vw,46px);margin:0 0 14px;}
-  .games-wrap h1 .accent{color:var(--pink);}
-  .games-wrap p.lead{color:var(--muted);font-size:15px;max-width:520px;margin:0 auto 50px;}
-  .soon-card{max-width:460px;margin:0 auto;background:var(--surface);border:1px dashed var(--line);border-radius:18px;padding:44px 30px;}
-  .soon-card .soon-icon{width:56px;height:56px;border-radius:14px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 18px;}
-  .soon-card h3{margin:0 0 10px;font-size:18px;}
-  .soon-card p{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 22px;}
-  .soon-card .soon-tag{display:inline-block;border:1px solid var(--line);color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:1.5px;padding:6px 14px;border-radius:999px;}
-
-  /* --- page contact --- */
-  .contact-wrap{max-width:640px;margin:0 auto;padding:70px 24px 100px;}
-  .contact-wrap h1{text-align:center;font-size:clamp(30px,5vw,46px);margin:0 0 12px;}
-  .contact-wrap h1 .accent{color:var(--pink);}
-  .contact-wrap p.lead{text-align:center;color:var(--muted);font-size:15px;max-width:480px;margin:0 auto 40px;}
-  .contact-email-row{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:34px;font-size:14px;}
-  .contact-email-row b{color:var(--gold);}
-  .copy-email-btn{background:var(--surface2);border:1px solid var(--line);color:var(--text);font-size:12px;padding:8px 14px;border-radius:8px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;}
-  .copy-email-btn:hover{border-color:var(--pink);}
-  .contact-form{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px;}
-  .contact-form input, .contact-form textarea{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:14px;font-family:inherit;resize:vertical;}
-  .contact-form textarea{min-height:130px;}
-  .contact-form .field label{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-  .send-note{font-size:12px;color:var(--muted);text-align:center;margin-top:14px;}
-  .order-review-notice{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:16px;font-size:13px;line-height:1.5;color:var(--text);}
-  .order-review-notice strong{display:block;margin-bottom:4px;}
-  .review-checkbox{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;}
-  .review-checkbox input{width:16px;height:16px;accent-color:var(--accent,#fff);cursor:pointer;}
-  #paypal-button-container.locked{opacity:.35;pointer-events:none;filter:grayscale(1);}
-
-  /* --- carte jeu disponible --- */
-  .game-card{max-width:460px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:38px 30px;text-align:center;}
-  .game-card .game-icon{width:96px;height:96px;border-radius:22px;overflow:hidden;margin:0 auto 20px;box-shadow:0 8px 30px rgba(255,62,127,0.25);border:1px solid var(--line);}
-  .game-card .game-icon img{width:100%;height:100%;object-fit:cover;display:block;}
-  .game-card h3{margin:0 0 6px;font-size:20px;}
-  .game-card .game-meta{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 16px;}
-  .game-card p.game-desc{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 26px;}
-  .download-btn{display:inline-flex;align-items:center;gap:10px;background:var(--pink);color:#1a0812;border:none;padding:15px 30px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;text-transform:uppercase;letter-spacing:1px;text-decoration:none;transition:background .15s,transform .15s;}
-  .download-btn:hover{background:#ff5c8f;transform:translateY(-2px);}
-  .download-note{font-size:11px;color:var(--muted);margin-top:14px;text-transform:uppercase;letter-spacing:1px;}
+@media(max-width:1050px){.pp{grid-template-columns:1fr 1fr}.buy{grid-column:1/-1;position:static}}
+@media(max-width:700px){.pp{grid-template-columns:1fr;padding:16px}.gal{flex-direction:column-reverse}.thumbs{flex-direction:row}.top{flex-wrap:wrap}.search{order:3;flex-basis:100%;max-width:none}.cart-btn span.t{display:none}main{padding:12px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
-<base target="_blank">
 </head>
 <body>
 
 <header>
-  <div class="headwrap">
-    <div class="logo"><span class="dot"></span> Ward DJet Studio</div>
-    <nav class="mainnav">
-      <button data-page="accueil" onclick="showPage('accueil')" class="active">Accueil</button>
-      <button data-page="shop" onclick="showPage('shop')">Boutique</button>
-      <button data-page="jeux" onclick="showPage('jeux')">Jeux</button>
-      <button data-page="contact" onclick="showPage('contact')">Contact</button>
-    </nav>
-    <button class="cart-btn" onclick="openCart()">Panier <span class="cart-count" id="cartCount">0</span></button>
+  <div class="top">
+    <button class="logo" onclick="showList()"><i></i>Ward DJet Shop</button>
+    <form class="search" onsubmit="event.preventDefault();doSearch()">
+      <input id="q" type="search" placeholder="Rechercher dans la boutique" aria-label="Rechercher" oninput="doSearch()">
+      <button type="submit" aria-label="Rechercher"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
+    </form>
+    <button class="cart-btn" onclick="openCart()" aria-label="Panier">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h3l2.6 11.5a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 7H6"/></svg>
+      <span class="n" id="cartCount">0</span><span class="t">Panier</span>
+    </button>
   </div>
+  <div class="sub"><div><span>Livraison incluse</span><span>TVA incluse</span><span>Impression à la demande par Printful</span></div></div>
 </header>
-<!-- Bannière publicitaire haut -->
-<div style="text-align:center;padding:12px 0;background:var(--bg);border-bottom:1px solid var(--line);">
-  <script>
-    atOptions = {
-      'key' : 'f8f75aa5f8ba0f72ae1004d096dc85f9',
-      'format' : 'iframe',
-      'height' : 60,
-      'width' : 468,
-      'params' : {}
-    };
-  </script>
-  <script src="https://www.highperformanceformat.com/f8f75aa5f8ba0f72ae1004d096dc85f9/invoke.js"></script>
-</div>
 
-
-<!-- ================= PAGE ACCUEIL ================= -->
-<section class="page active" id="page-accueil">
-  <div class="studio-hero">
-    <div class="stamp"><span class="dot"></span> Studio officiel</div>
-    <h1>WARD <span class="accent">DJET</span> STUDIO</h1>
-    <p class="lead">Musique, jeux et créations numériques faits maison — du son sous les noms Ward DJet & Hot Lag jusqu'aux jeux et outils codés de A à Z.</p>
-    <div class="studio-cta-row">
-      <button class="studio-cta primary" onclick="showPage('shop')">Voir la boutique</button>
-      <button class="studio-cta" onclick="showPage('jeux')">Découvrir les jeux</button>
-      <button class="studio-cta" onclick="showPage('contact')">Contacter le studio</button>
-    </div>
-  </div>
-
-  <div class="pillars">
-    <div class="pillar">
-      <div class="picto">🎧</div>
-      <h3>Musique</h3>
-      <p>Les sorties et projets sous les noms Ward DJet et Hot Lag.</p>
-    </div>
-    <div class="pillar">
-      <div class="picto">🎮</div>
-      <h3>Jeux</h3>
-      <p>Jeux et expériences interactives développées par le studio.</p>
-      <span class="go" onclick="showPage('jeux')">Voir la page jeux →</span>
-    </div>
-    <div class="pillar">
-      <div class="picto">🛍️</div>
-      <h3>Boutique</h3>
-      <p>Merch officiel imprimé à la demande — livraison et TVA incluses.</p>
-      <span class="go" onclick="showPage('shop')">Voir la boutique →</span>
-    </div>
-    <div class="pillar">
-      <div class="picto">✉️</div>
-      <h3>Contact</h3>
-      <p>Une question, une proposition ? Écris directement au studio.</p>
-      <span class="go" onclick="showPage('contact')">Écrire au studio →</span>
-    </div>
-  </div>
-
-  <div class="brands-strip">
-    <div class="bs-title">Les marques du studio</div>
-    <div class="brands-row">
-      <div class="brand-chip"><div class="bname">Ward DJet</div><div class="bdesc">Nom principal du studio</div></div>
-      <div class="brand-chip"><div class="bname">Hot Lag</div><div class="bdesc">Projet musique & branding jeux</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ================= PAGE BOUTIQUE ================= -->
-<section class="page" id="page-shop">
-  <div class="ticker"><div class="ticker-track" id="tickerTrack"></div></div>
-
-  <div class="hero">
-    <div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    <h1>WARD <span class="accent">DJET</span> SHOP</h1>
-    <p>Merch officiel, direct du studio. T-shirts et accessoires imprimés à la demande.</p>
-    <div class="badge-row">
-      <div class="badge">Livraison <b>incluse</b></div>
-      <div class="badge">TVA <b>incluse</b></div>
-      <div class="badge">Impression à la demande</div>
-    </div>
-  </div>
-
-  <main>
-    <div class="section-title">
-      <h2>La collection</h2>
+<main>
+  <section id="listView">
+    <div class="bar">
+      <h1 id="listTitle">Tous les articles</h1>
       <span id="countLabel"></span>
+      <select id="sort" onchange="renderGrid()" aria-label="Trier">
+        <option value="pop">Trier : sélection</option>
+        <option value="asc">Prix croissant</option>
+        <option value="desc">Prix décroissant</option>
+        <option value="az">Nom A–Z</option>
+      </select>
     </div>
     <div id="grid" class="grid"></div>
-  </main>
-</section>
+  </section>
+  <section id="productView" hidden></section>
+</main>
 
-<!-- ================= PAGE JEUX ================= -->
-<section class="page" id="page-jeux">
-  <div class="games-wrap">
-    <h1>NOS <span class="accent">JEUX</span></h1>
-    <p class="lead">Le premier jeu du studio est disponible en téléchargement direct.</p>
-    <div class="game-card">
-      <div class="game-icon"><img src="data:image/png;base64,ICON_BASE64_PLACEHOLDER" alt="Icône Hathi Pro"></div>
-      <h3>Hathi Pro</h3>
-      <p class="game-meta">Android · APK</p>
-      <p class="game-desc">Le premier jeu sorti du studio Ward DJet. Télécharge l'APK et installe-le directement sur ton téléphone Android.</p>
-      <a class="download-btn" href="./HathiPro.apk" download="HathiPro.apk">⬇ Télécharger l'APK</a>
-      <p class="download-note">Nécessite l'autorisation "sources inconnues" sur Android</p>
-    </div>
-  </div>
-</section>
+<footer>Ward DJet Shop — vêtements et accessoires imprimés à la demande via Printful.</footer>
 
-<!-- ================= PAGE CONTACT ================= -->
-<section class="page" id="page-contact">
-  <div class="contact-wrap">
-    <h1>CONTACTER LE <span class="accent">STUDIO</span></h1>
-    <p class="lead">Une question sur une commande, une proposition, ou juste envie de dire bonjour ? Écris-nous directement.</p>
-
-    <div class="contact-email-row">
-      <span>📧 <b>ward.djet.studio@gmail.com</b></span>
-      <button class="copy-email-btn" onclick="copyStudioEmail()" id="copyEmailBtn">Copier</button>
-    </div>
-
-    <form class="contact-form" id="contactForm" onsubmit="sendContactMessage(event)">
-      <div class="field">
-        <label>Nom</label>
-        <input type="text" id="cName" required placeholder="Ton nom">
-      </div>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="cEmail" required placeholder="ton@email.com">
-      </div>
-      <div class="field">
-        <label>Message</label>
-        <textarea id="cMessage" required placeholder="Ton message pour le studio…"></textarea>
-      </div>
-      <button type="submit" class="add-btn">Envoyer le message</button>
-      <p class="send-note">Ouvre ta messagerie pré-remplie, à destination de ward.djet.studio@gmail.com.</p>
-    </form>
-  </div>
-</section>
-
-<footer>Ward DJet Studio — musique, jeux & merch imprimé à la demande via Printful.</footer>
-
-<!-- fenêtre produit -->
-<div class="overlay" id="productOverlay" onclick="if(event.target===this)closeProduct()">
-  <div class="window">
-    <div class="window-bar">
-      <div class="dots"><i></i><i></i><i></i></div>
-      <div class="title">fiche produit</div>
-      <button class="close-x" onclick="closeProduct()">&times;</button>
-    </div>
-    <div class="window-body" id="productBody"></div>
-  </div>
-</div>
-
-<!-- fenêtre panier -->
-<div class="overlay" id="cartOverlay" onclick="if(event.target===this)closeCart()">
-  <div class="window">
-    <div class="window-bar">
-      <div class="dots"><i></i><i></i><i></i></div>
-      <div class="title">panier</div>
-      <button class="close-x" onclick="closeCart()">&times;</button>
-    </div>
-    <div class="window-body" id="cartBody"></div>
-  </div>
+<div class="ov" id="cartOverlay" onclick="if(event.target===this)closeCart()">
+  <aside class="drawer" role="dialog" aria-label="Panier">
+    <div class="dh"><h3>Panier</h3><button onclick="closeCart()" aria-label="Fermer">&times;</button></div>
+    <div class="db" id="cartBody"></div>
+    <div class="df" id="cartFoot"></div>
+  </aside>
 </div>
 
 <script>
 /* ================= CONFIGURATION ================= */
 const PRINTFUL_TOKEN = "UDU9tetkTzbrGmYCA4Hz8dAMFTePb2RHJlvDOC5d";
-// Prix affiché = prix de vente Printful (déjà TTC côté boutique) + forfait livraison ci-dessous.
-const SHIPPING_FLAT = 4.90; // € — forfait livraison inclus dans le prix affiché
+const SHIPPING_FLAT = 4.90;
 const CURRENCY = "€";
-// L'API Printful ne renvoie pas d'en-têtes CORS : un appel direct depuis le
-// navigateur échoue toujours. On passe par corsproxy.io, qui transmet le
-// header Authorization jusqu'à Printful.
-// SANS clé (CORSPROXY_KEY = ""), ça ne marche QUE en localhost / ouverture
-// locale du fichier. Pour que ça marche une fois le site en ligne (ton vrai
-// nom de domaine), il faut une clé gratuite :
-//   1. https://corsproxy.io -> Sign up (gratuit, aucune carte requise)
-//   2. Dashboard -> Add domain -> mets le domaine où sera hébergé ce fichier
-//   3. Copie la clé API et colle-la ci-dessous
-const CORSPROXY_KEY = ""; // colle ta clé corsproxy.io ici une fois le site en ligne
+// Sans clé corsproxy.io, l'appel ne marche qu'en local. Ajoute ta clé une fois le site en ligne.
+const CORSPROXY_KEY = "";
 const PUBLIC_PROXY = (url) => "https://corsproxy.io/?url=" + encodeURIComponent(url) + (CORSPROXY_KEY ? "&key=" + CORSPROXY_KEY : "");
 
-let PRODUCTS = [];
-let CART = []; // {variantId, productId, name, image, size, color, price, qty}
-let lastFetchError = "";
+let PRODUCTS = [], CART = [], lastFetchError = "";
 
-/* ================= FETCH PRINTFUL ================= */
+const $ = id => document.getElementById(id);
+function escapeHtml(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function priceHtml(n){const [i,d]=n.toFixed(2).split(".");return `<span class="pr"><b>${i}</b><sup>${d}</sup>${CURRENCY}</span>`;}
+
+/* ================= PRINTFUL ================= */
 async function pfFetch(path){
-  const url = "https://api.printful.com" + path;
-  const target = PUBLIC_PROXY(url);
   let r;
-  try{
-    r = await fetch(target, { headers: { "Authorization": "Bearer " + PRINTFUL_TOKEN } });
-  }catch(e){
-    lastFetchError = "réseau injoignable (" + (e.message || e) + ")";
-    throw new Error(lastFetchError);
-  }
-  if(!r.ok){
-    lastFetchError = "HTTP " + r.status + (r.status === 401 ? " — token API invalide, ou proxy sans clé hors localhost (voir CORSPROXY_KEY en haut du script)" : "");
-    throw new Error(lastFetchError);
-  }
+  try{ r = await fetch(PUBLIC_PROXY("https://api.printful.com"+path),{headers:{Authorization:"Bearer "+PRINTFUL_TOKEN}}); }
+  catch(e){ lastFetchError="réseau injoignable ("+(e.message||e)+")"; throw new Error(lastFetchError); }
+  if(!r.ok){ lastFetchError="HTTP "+r.status+(r.status===401?" — token invalide, ou proxy sans clé hors localhost (voir CORSPROXY_KEY)":""); throw new Error(lastFetchError); }
   const data = await r.json();
-  if(data && data.error){
-    lastFetchError = data.error.message || JSON.stringify(data.error);
-    throw new Error(lastFetchError);
-  }
+  if(data && data.error){ lastFetchError = data.error.message || JSON.stringify(data.error); throw new Error(lastFetchError); }
   return data;
 }
 
 async function loadProducts(){
-  const grid = document.getElementById("grid");
-  grid.innerHTML = '<div class="state-msg" style="grid-column:1/-1"><div class="spinner"></div>Chargement de la collection…</div>';
+  $("grid").innerHTML='<div class="msg"><div class="spin"></div>Chargement de la collection…</div>';
   try{
     const list = await pfFetch("/store/products");
     const items = (list && list.result) || [];
-    if(items.length === 0){
-      grid.innerHTML = '<div class="state-msg" style="grid-column:1/-1">Aucun produit synchronisé dans le store Printful pour le moment.</div>';
-      document.getElementById("countLabel").textContent = "";
-      return;
-    }
-    // détail de chaque produit pour récupérer variantes + prix
-    const details = await Promise.all(items.map(p => pfFetch("/store/products/" + p.id).catch(() => null)));
-    // DEBUG TEMPORAIRE : affiche dans la console (F12) la liste brute des fichiers
-    // renvoyés par variante, pour voir précisément quelles photos Printful expose ici.
-    details.filter(Boolean).forEach(d => {
-      const sp = d.result.sync_product;
-      (d.result.sync_variants || []).forEach(v => {
-        console.log(`[DEBUG PHOTOS] ${sp.name} — ${v.color || ""} ${v.size || ""}`, v.files);
-      });
-    });
-    PRODUCTS = details.filter(Boolean).map(d => {
-      const sp = d.result.sync_product;
-      const variants = d.result.sync_variants || [];
-      return {
-        id: sp.id,
-        name: sp.name,
-        thumbnail: sp.thumbnail_url,
-        variants: variants.map(v => {
-          // toutes les photos du produit (mockup de base, mannequin, autres poses…) —
-          // on exclut le fichier "default" qui est le visuel d'impression brut (le design),
-          // pas une photo du vêtement porté/posé.
-          const seen = new Set();
-          let images = (v.files || [])
-            .filter(f => f.preview_url && f.type !== "default")
-            .map(f => f.preview_url)
-            .filter(u => !seen.has(u) && seen.add(u));
-          if(images.length === 0) images = [sp.thumbnail_url];
-          return {
-            id: v.id,
-            name: v.name,
-            size: v.size || "",
-            color: v.color || "",
-            price: parseFloat(v.retail_price || 0),
-            images: images,
-            image: images[0],
-            inStock: v.availability_status !== "discontinued"
-          };
-        })
-      };
-    }).filter(p => p.variants.length > 0);
+    if(!items.length){ $("grid").innerHTML='<div class="msg">Aucun produit synchronisé dans le store Printful.</div>'; $("countLabel").textContent=""; return; }
+    const details = await Promise.all(items.map(p=>pfFetch("/store/products/"+p.id).catch(()=>null)));
+    PRODUCTS = details.filter(Boolean).map(d=>{
+      const sp=d.result.sync_product, vs=d.result.sync_variants||[];
+      return {id:sp.id,name:sp.name,thumbnail:sp.thumbnail_url,variants:vs.map(v=>({
+        id:v.id,name:v.name,size:v.size||"",color:v.color||"",price:parseFloat(v.retail_price||0),
+        image:(v.files&&v.files.find(f=>f.type==="preview"))?.preview_url||sp.thumbnail_url,
+        inStock:v.availability_status!=="discontinued"}))};
+    }).filter(p=>p.variants.length>0);
     renderGrid();
-    renderTicker();
   }catch(e){
-    grid.innerHTML = '<div class="state-msg error" style="grid-column:1/-1">Impossible de charger le catalogue Printful.<br><span style="font-size:12px">'+ escapeHtml(e.message || lastFetchError || "erreur inconnue") +'</span><br><br>Vérifie que le token est correct et que la boutique Printful contient bien des produits synchronisés.</div>';
-    document.getElementById("countLabel").textContent = "";
+    $("grid").innerHTML='<div class="msg err">Impossible de charger le catalogue Printful.<br><small>'+escapeHtml(e.message||lastFetchError||"erreur inconnue")+'</small><br><br>Vérifie le token et que la boutique contient des produits synchronisés.</div>';
+    $("countLabel").textContent="";
   }
 }
 
-function cheapestPrice(product){
-  return Math.min(...product.variants.map(v => v.price)) + SHIPPING_FLAT;
-}
+const cheapest = p => Math.min(...p.variants.map(v=>v.price)) + SHIPPING_FLAT;
+const colorsOf = p => [...new Set(p.variants.map(v=>v.color).filter(Boolean))];
 
+/* ================= LISTE ================= */
+function doSearch(){ showList(true); renderGrid(); }
+function showList(keep){
+  if(!keep) $("q").value="";
+  $("productView").hidden=true; $("listView").hidden=false;
+  if(!keep) renderGrid();
+  window.scrollTo({top:0});
+}
 function renderGrid(){
-  const grid = document.getElementById("grid");
-  document.getElementById("countLabel").textContent = PRODUCTS.length + " article" + (PRODUCTS.length>1?"s":"");
-  grid.innerHTML = PRODUCTS.map(p => `
-    <div class="card" onclick="openProduct(${p.id})">
-      <div class="thumb"><img src="${p.thumbnail}" alt="${escapeHtml(p.name)}" loading="lazy"></div>
-      <div class="info">
-        <p class="tag">Livraison + TVA incluses</p>
-        <p class="name">${escapeHtml(p.name)}</p>
-        <p class="price">à partir de ${cheapestPrice(p).toFixed(2)} ${CURRENCY}</p>
-      </div>
-    </div>
-  `).join("");
+  const q=$("q").value.trim().toLowerCase(), s=$("sort").value;
+  let a=PRODUCTS.filter(p=>p.name.toLowerCase().includes(q));
+  if(s==="asc")a.sort((x,y)=>cheapest(x)-cheapest(y));
+  if(s==="desc")a.sort((x,y)=>cheapest(y)-cheapest(x));
+  if(s==="az")a.sort((x,y)=>x.name.localeCompare(y.name));
+  $("listTitle").textContent = q ? "Résultats pour « "+$("q").value.trim()+" »" : "Tous les articles";
+  $("countLabel").textContent = a.length+" article"+(a.length>1?"s":"");
+  if(!PRODUCTS.length) return;
+  if(!a.length){ $("grid").innerHTML='<div class="msg">Aucun article ne correspond à ta recherche.</div>'; return; }
+  $("grid").innerHTML=a.map(p=>{
+    const cs=colorsOf(p);
+    return `<article class="card" tabindex="0" onclick="openProduct(${p.id})" onkeydown="if(event.key==='Enter')openProduct(${p.id})">
+      <div class="th"><img src="${p.thumbnail}" alt="${escapeHtml(p.name)}" loading="lazy"></div>
+      <div class="in">
+        <div class="nm">${escapeHtml(p.name)}</div>
+        ${cs.length?`<div class="dots">${cs.slice(0,6).map(c=>`<i style="background:${colorToCss(c)}" title="${escapeHtml(c)}"></i>`).join("")}${cs.length>6?`<small>+${cs.length-6}</small>`:""}</div>`:""}
+        <div><span class="from">À partir de</span> ${priceHtml(cheapest(p))}</div>
+        <div class="ship">Livraison incluse</div>
+      </div></article>`;
+  }).join("");
 }
 
-function renderTicker(){
-  const names = PRODUCTS.map(p => p.name.toUpperCase()).join("  ★  ");
-  const track = document.getElementById("tickerTrack");
-  track.innerHTML = `<span>${names}</span><span>${names}</span>`;
-}
-
-function escapeHtml(s){
-  return (s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
-
-/* ================= FENÊTRE PRODUIT ================= */
-let currentProduct = null;
-let currentQty = 1;
-let currentColors = [];   // couleurs disponibles pour le produit ouvert
-let currentSizes = [];    // tailles disponibles pour le produit ouvert
-let selectedColor = null;
-let selectedSize = null;
-let currentVariantId = null;
-let currentImageIndex = 0;
-
-const SIZE_ORDER = ["XS","S","M","L","XL","XXL","2XL","3XL","4XL","5XL","6XL"];
-function sortSizes(arr){
-  arr.sort((a,b) => {
-    const ia = SIZE_ORDER.indexOf(a.toUpperCase());
-    const ib = SIZE_ORDER.indexOf(b.toUpperCase());
-    if(ia === -1 && ib === -1) return a.localeCompare(b);
-    if(ia === -1) return 1;
-    if(ib === -1) return -1;
-    return ia - ib;
-  });
-}
-
-// convertit un nom de couleur Printful en couleur CSS affichable sur le rond
+/* ================= FICHE PRODUIT ================= */
+let currentProduct=null,currentColors=[],currentSizes=[],selectedColor=null,selectedSize=null,currentVariantId=null;
+const SIZE_ORDER=["XS","S","M","L","XL","XXL","2XL","3XL","4XL","5XL","6XL"];
+function sortSizes(arr){arr.sort((a,b)=>{const ia=SIZE_ORDER.indexOf(a.toUpperCase()),ib=SIZE_ORDER.indexOf(b.toUpperCase());if(ia<0&&ib<0)return a.localeCompare(b);if(ia<0)return 1;if(ib<0)return -1;return ia-ib;});}
 function colorToCss(name){
-  if(!name) return "#888";
-  const map = {
-    "heather grey":"#B0AFAF","heather gray":"#B0AFAF","sport grey":"#9B9B9B","sport gray":"#9B9B9B",
-    "ash":"#C8C9C7","charcoal":"#36454F","navy":"#1B1F3B","royal":"#1F3A93","royal blue":"#1F3A93",
-    "kelly green":"#4CBB17","forest green":"#228B22","maroon":"#800000","heather navy":"#39435A",
-    "true royal":"#1F3A93","dark grey heather":"#4A4A4A","light blue":"#ADD8E6","natural":"#EDE6D6",
-    "vintage black":"#28282B","black heather":"#2B2B2B","heather red":"#B33A3A","military green":"#4B5320",
-    "sand":"#C2B280","cream":"#F5F0E1","dark heather":"#4A4A4A"
-  };
-  const key = name.toLowerCase().trim();
-  if(map[key]) return map[key];
-  const stripped = key.replace(/heather|solid|vintage/g,"").trim();
-  if(map[stripped]) return map[stripped];
-  return key; // sinon on laisse le CSS interpréter directement (black, white, red, navy…)
+  if(!name)return"#888";
+  const map={"heather grey":"#B0AFAF","heather gray":"#B0AFAF","sport grey":"#9B9B9B","sport gray":"#9B9B9B","ash":"#C8C9C7","charcoal":"#36454F","navy":"#1B1F3B","royal":"#1F3A93","royal blue":"#1F3A93","kelly green":"#4CBB17","forest green":"#228B22","maroon":"#800000","heather navy":"#39435A","true royal":"#1F3A93","dark grey heather":"#4A4A4A","light blue":"#ADD8E6","natural":"#EDE6D6","vintage black":"#28282B","black heather":"#2B2B2B","heather red":"#B33A3A","military green":"#4B5320","sand":"#C2B280","cream":"#F5F0E1","dark heather":"#4A4A4A"};
+  const key=name.toLowerCase().trim();
+  if(map[key])return map[key];
+  const st=key.replace(/heather|solid|vintage/g,"").trim();
+  return map[st]||key;
 }
-
-function getVariant(color, size){
-  return currentProduct.variants.find(v => (v.color || null) === (color || null) && (v.size || null) === (size || null));
-}
+const getVariant=(c,s)=>currentProduct.variants.find(v=>(v.color||null)===(c||null)&&(v.size||null)===(s||null));
+const curVariant=()=>currentProduct.variants.find(x=>x.id===currentVariantId);
 
 function openProduct(id){
-  currentProduct = PRODUCTS.find(p => p.id === id);
-  if(!currentProduct) return;
-  currentQty = 1;
-  currentImageIndex = 0;
-  computeVariantOptions();
-  renderProductWindow();
-  document.getElementById("productOverlay").classList.add("open");
+  currentProduct=PRODUCTS.find(p=>p.id===id); if(!currentProduct)return;
+  currentColors=colorsOf(currentProduct);
+  currentSizes=[...new Set(currentProduct.variants.map(v=>v.size).filter(Boolean))]; sortSizes(currentSizes);
+  const def=currentProduct.variants.find(v=>v.inStock)||currentProduct.variants[0];
+  selectedColor=def.color||null; selectedSize=def.size||null; currentVariantId=def.id;
+  renderProduct();
+  $("listView").hidden=true; $("productView").hidden=false;
+  window.scrollTo({top:0});
 }
-function closeProduct(){
-  document.getElementById("productOverlay").classList.remove("open");
-}
-
-function computeVariantOptions(){
-  currentColors = [...new Set(currentProduct.variants.map(v => v.color).filter(Boolean))];
-  currentSizes = [...new Set(currentProduct.variants.map(v => v.size).filter(Boolean))];
-  sortSizes(currentSizes);
-  const def = currentProduct.variants.find(v => v.inStock) || currentProduct.variants[0];
-  selectedColor = def.color || null;
-  selectedSize = def.size || null;
-  currentVariantId = def.id;
-}
-
 function colorRowHtml(){
-  return currentColors.map(c => {
-    const sel = c === selectedColor;
-    const availableSomewhere = currentProduct.variants.some(v => v.color === c && v.inStock);
-    return `<button type="button" class="color-swatch ${sel ? "selected" : ""} ${availableSomewhere ? "" : "oos"}"
-      style="background:${colorToCss(c)}" data-color="${escapeHtml(c)}" title="${escapeHtml(c)}"
-      onclick="selectColor('${escapeHtml(c).replace(/'/g,"\\'")}')"></button>`;
+  return currentColors.map(c=>{
+    const ok=currentProduct.variants.some(v=>v.color===c&&v.inStock);
+    return `<button type="button" class="sw ${c===selectedColor?"sel":""} ${ok?"":"oos"}" style="background:${colorToCss(c)}" data-c="${escapeHtml(c)}" title="${escapeHtml(c)}" aria-label="${escapeHtml(c)}" onclick="selectColor(this.dataset.c)"></button>`;
   }).join("");
 }
-
 function sizeRowHtml(){
-  return currentSizes.map(s => {
-    const v = getVariant(selectedColor, s);
-    const oos = !v || !v.inStock;
-    const sel = s === selectedSize;
-    return `<button type="button" class="size-btn ${sel ? "selected" : ""} ${oos ? "oos" : ""}"
-      data-size="${escapeHtml(s)}" onclick="selectSize('${escapeHtml(s).replace(/'/g,"\\'")}')">${escapeHtml(s)}</button>`;
+  return currentSizes.map(s=>{
+    const v=getVariant(selectedColor,s), oos=!v||!v.inStock;
+    return `<button type="button" class="sz ${s===selectedSize?"sel":""} ${oos?"oos":""}" data-s="${escapeHtml(s)}" onclick="selectSize(this.dataset.s)">${escapeHtml(s)}</button>`;
   }).join("");
 }
+function galleryImgs(){ return [...new Set(currentProduct.variants.map(v=>v.image).filter(Boolean))].slice(0,12); }
+function thumbsHtml(cur){ return galleryImgs().map(u=>`<button type="button" class="${u===cur?"on":""}" data-u="${u}" onclick="setImg(this.dataset.u)"><img src="${u}" alt=""></button>`).join(""); }
+function setImg(u){ $("pImg").src=u; document.querySelectorAll("#thumbs button").forEach(b=>b.classList.toggle("on",b.dataset.u===u)); }
 
-function thumbHtml(v, name){
-  const images = (v.images && v.images.length) ? v.images : [v.image];
-  if(currentImageIndex >= images.length) currentImageIndex = 0;
-  const multi = images.length > 1;
-  const arrows = multi ? `
-    <button type="button" class="carousel-arrow prev" onclick="changeProductImage(-1)" aria-label="Photo précédente">‹</button>
-    <button type="button" class="carousel-arrow next" onclick="changeProductImage(1)" aria-label="Photo suivante">›</button>
-    <div class="carousel-dots">${images.map((_,i) => `<i class="${i===currentImageIndex?"active":""}" onclick="setProductImage(${i})"></i>`).join("")}</div>
-  ` : "";
-  return `<div class="p-thumb" id="pThumb"><img id="pImg" src="${images[currentImageIndex]}" alt="${escapeHtml(name)}">${arrows}</div>`;
-}
-function changeProductImage(delta){
-  const v = currentProduct.variants.find(x => x.id === currentVariantId);
-  const images = (v.images && v.images.length) ? v.images : [v.image];
-  currentImageIndex = (currentImageIndex + delta + images.length) % images.length;
-  refreshThumb(v);
-}
-function setProductImage(i){
-  const v = currentProduct.variants.find(x => x.id === currentVariantId);
-  currentImageIndex = i;
-  refreshThumb(v);
-}
-function refreshThumb(v){
-  const wrap = document.getElementById("pThumb");
-  if(wrap) wrap.outerHTML = thumbHtml(v, currentProduct.name);
-}
-
-function renderProductWindow(){
-  const p = currentProduct;
-  const body = document.getElementById("productBody");
-  const def = p.variants.find(v => v.id === currentVariantId) || p.variants[0];
-  const hasColor = currentColors.length > 0;
-  const hasSize = currentSizes.length > 0;
-
-  let variantFields = "";
-  if(hasColor || hasSize){
-    if(hasColor){
-      variantFields += `
-        <div class="field">
-          <label>Couleur — <span class="val" id="colorLabel">${escapeHtml(selectedColor || "")}</span></label>
-          <div class="color-row" id="colorRow">${colorRowHtml()}</div>
-        </div>`;
-    }
-    if(hasSize){
-      variantFields += `
-        <div class="field">
-          <label>Taille</label>
-          <div class="size-row" id="sizeRow">${sizeRowHtml()}</div>
-        </div>`;
-    }
-  } else {
-    // fallback si le produit n'a ni couleur ni taille définies
-    const options = p.variants.map(v => `<option value="${v.id}">${escapeHtml(v.name)} — ${v.price.toFixed(2)} ${CURRENCY}</option>`).join("");
-    variantFields = `
-      <div class="field">
-        <label>Choisir une variante</label>
-        <select id="variantSelect" onchange="onVariantChange()">${options}</select>
-      </div>`;
-  }
-
-  body.innerHTML = `
-    ${thumbHtml(def, p.name)}
-    <h3 class="p-title">${escapeHtml(p.name)}</h3>
-    <p class="p-price" id="pPrice">${(def.price + SHIPPING_FLAT).toFixed(2)} ${CURRENCY}</p>
-    <p class="p-included">Livraison incluse · TVA incluse · estimation 5–12 jours ouvrés (imprimé à la demande)</p>
-    ${variantFields}
-    <p class="stock-note ${def.inStock ? "" : "oos"}" id="stockNote">${def.inStock ? "" : "Rupture de stock pour cette combinaison"}</p>
-    <div class="field">
-      <label>Quantité</label>
-      <div class="qty-row">
-        <button class="qty-btn" onclick="changeQty(-1)">−</button>
-        <span id="qtyLabel">1</span>
-        <button class="qty-btn" onclick="changeQty(1)">+</button>
-      </div>
-    </div>
-    <button class="add-btn" id="addBtn" onclick="addToCart()">${def.inStock ? "Ajouter au panier" : "Rupture de stock"}</button>
-  `;
-  document.getElementById("addBtn").disabled = !def.inStock;
-}
-
-function selectColor(c){
-  selectedColor = c;
-  let v = getVariant(selectedColor, selectedSize);
-  if(!v){
-    // la taille actuelle n'existe pas dans cette couleur : on retombe sur une taille dispo, sinon la première
-    v = currentProduct.variants.find(x => x.color === c && x.inStock) || currentProduct.variants.find(x => x.color === c);
-    if(v) selectedSize = v.size || null;
-  }
-  if(v) currentVariantId = v.id;
-  document.querySelectorAll("#colorRow .color-swatch").forEach(el => {
-    el.classList.toggle("selected", el.dataset.color === selectedColor);
-  });
-  const label = document.getElementById("colorLabel");
-  if(label) label.textContent = selectedColor || "";
-  const sizeRow = document.getElementById("sizeRow");
-  if(sizeRow) sizeRow.innerHTML = sizeRowHtml();
-  updateVariantDisplay();
-}
-
-function selectSize(s){
-  selectedSize = s;
-  const v = getVariant(selectedColor, selectedSize);
-  if(v) currentVariantId = v.id;
-  document.querySelectorAll("#sizeRow .size-btn").forEach(el => {
-    el.classList.toggle("selected", el.dataset.size === selectedSize);
-  });
-  updateVariantDisplay();
-}
-
-function updateVariantDisplay(){
-  const v = currentProduct.variants.find(x => x.id === currentVariantId);
-  if(!v) return;
-  currentImageIndex = 0;
-  refreshThumb(v);
-  document.getElementById("pPrice").textContent = (v.price + SHIPPING_FLAT).toFixed(2) + " " + CURRENCY;
-  const addBtn = document.getElementById("addBtn");
-  addBtn.disabled = !v.inStock;
-  addBtn.textContent = v.inStock ? "Ajouter au panier" : "Rupture de stock";
-  const note = document.getElementById("stockNote");
-  if(note){
-    note.textContent = v.inStock ? "" : "Rupture de stock pour cette combinaison";
-    note.classList.toggle("oos", !v.inStock);
-  }
-}
-
-// fallback : produit sans couleur/taille structurée (simple liste déroulante)
-function onVariantChange(){
-  const sel = document.getElementById("variantSelect");
-  currentVariantId = parseInt(sel.value, 10) || sel.value;
-  const v = currentProduct.variants.find(v => String(v.id) === sel.value);
-  if(v) currentVariantId = v.id;
-  updateVariantDisplay();
-}
-
-function changeQty(delta){
-  currentQty = Math.max(1, currentQty + delta);
-  document.getElementById("qtyLabel").textContent = currentQty;
-}
-
-function addToCart(){
-  const v = currentProduct.variants.find(x => x.id === currentVariantId);
-  if(!v || !v.inStock) return;
-  const meta = [v.color, v.size].filter(Boolean).join(" / ");
-  const existing = CART.find(c => c.variantId === v.id);
-  if(existing){
-    existing.qty += currentQty;
+function renderProduct(){
+  const p=currentProduct, def=curVariant();
+  let vf="";
+  if(currentColors.length||currentSizes.length){
+    if(currentColors.length) vf+=`<div class="field"><p class="lab">Couleur : <b id="colorLabel">${escapeHtml(selectedColor||"")}</b></p><div class="colors" id="colorRow">${colorRowHtml()}</div></div>`;
+    if(currentSizes.length) vf+=`<div class="field"><p class="lab">Taille</p><div class="sizes" id="sizeRow">${sizeRowHtml()}</div></div>`;
   }else{
-    CART.push({
-      variantId: v.id,
-      productId: currentProduct.id,
-      name: currentProduct.name + (meta ? " — " + meta : (v.name ? " — " + v.name : "")),
-      image: v.image,
-      size: v.size,
-      color: v.color,
-      price: v.price + SHIPPING_FLAT,
-      qty: currentQty
-    });
+    vf=`<div class="field"><p class="lab">Variante</p><select class="v" id="variantSelect" onchange="onVariantChange()">${p.variants.map(v=>`<option value="${v.id}">${escapeHtml(v.name)} — ${(v.price+SHIPPING_FLAT).toFixed(2)} ${CURRENCY}</option>`).join("")}</select></div>`;
   }
-  updateCartCount();
-  closeProduct();
-  openCart();
-}
-
-/* ================= FENÊTRE PANIER ================= */
-function updateCartCount(){
-  const n = CART.reduce((s,c) => s + c.qty, 0);
-  document.getElementById("cartCount").textContent = n;
-}
-function openCart(){
-  renderCartWindow();
-  document.getElementById("cartOverlay").classList.add("open");
-}
-function closeCart(){
-  document.getElementById("cartOverlay").classList.remove("open");
-}
-function removeFromCart(variantId){
-  CART = CART.filter(c => c.variantId !== variantId);
-  updateCartCount();
-  renderCartWindow();
-}
-function renderCartWindow(){
-  const body = document.getElementById("cartBody");
-  if(CART.length === 0){
-    body.innerHTML = '<div class="empty-cart">Ton panier est vide.<br>Ajoute un article depuis la collection.</div>';
-    return;
-  }
-  const total = CART.reduce((s,c) => s + c.price*c.qty, 0);
-  body.innerHTML = CART.map(c => `
-    <div class="cart-item">
-      <img src="${c.image}" alt="">
-      <div class="ci-info">
-        <p class="ci-name">${escapeHtml(c.name)}</p>
-        <p class="ci-meta">Qté ${c.qty}</p>
-        <p class="ci-price">${(c.price*c.qty).toFixed(2)} ${CURRENCY}</p>
-        <button class="ci-remove" onclick="removeFromCart(${c.variantId})">retirer</button>
+  $("productView").innerHTML=`
+    <button class="back" onclick="showList(true)">‹ Retour aux résultats</button>
+    <div class="pp">
+      <div class="gal"><div class="thumbs" id="thumbs">${thumbsHtml(def.image)}</div><div class="main-img"><img id="pImg" src="${def.image}" alt="${escapeHtml(p.name)}"></div></div>
+      <div>
+        <h2>${escapeHtml(p.name)}</h2><hr>
+        <div class="big" id="pPrice"></div>
+        <p class="sm">Livraison et TVA incluses</p><hr>
+        ${vf}
       </div>
-    </div>
-  `).join("") + `
-    <div class="cart-total-row"><span>Livraison</span><span>incluse</span></div>
-    <div class="cart-total-row"><span>TVA</span><span>incluse</span></div>
-    <div class="cart-total-row big"><span>Total</span><span>${total.toFixed(2)} ${CURRENCY}</span></div>
-    <div class="order-review-notice">
-      <strong>Avant de payer</strong>
-      Ta commande est créée automatiquement dans notre système de production, mais elle est vérifiée et validée manuellement par le studio avant fabrication. Ça peut donc prendre un peu plus de temps que prévu.
-      <label class="review-checkbox">
-        <input type="checkbox" id="reviewAck" onchange="onReviewAckChange()">
-        J'ai compris
-      </label>
-    </div>
-    <div id="paypal-button-container" class="locked" style="margin-top:14px;"></div>
-    <p class="send-note" id="paypalNote"></p>
-  `;
-  renderPayPalButtons(total);
+      <div class="buy">
+        <div class="big" id="pPrice2"></div>
+        <p class="sm">Livraison et TVA incluses</p>
+        <p class="stock" id="stockNote"></p>
+        <label for="qty">Quantité</label>
+        <select id="qty">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<option>${n}</option>`).join("")}</select>
+        <button class="btn p" id="addBtn" onclick="addToCart()"></button>
+        <button class="btn d" id="buyBtn" onclick="addToCart(true)">Acheter maintenant</button>
+        <div class="meta"><span>Vendu par</span><b>Ward DJet Shop</b><span>Fabrication</span><b>Impression à la demande</b></div>
+      </div>
+    </div>`;
+  updateVariantDisplay();
+}
+function selectColor(c){
+  selectedColor=c;
+  let v=getVariant(c,selectedSize);
+  if(!v){ v=currentProduct.variants.find(x=>x.color===c&&x.inStock)||currentProduct.variants.find(x=>x.color===c); if(v)selectedSize=v.size||null; }
+  if(v)currentVariantId=v.id;
+  document.querySelectorAll("#colorRow .sw").forEach(el=>el.classList.toggle("sel",el.dataset.c===c));
+  const l=$("colorLabel"); if(l)l.textContent=c||"";
+  const sr=$("sizeRow"); if(sr)sr.innerHTML=sizeRowHtml();
+  updateVariantDisplay(true);
+}
+function selectSize(s){
+  selectedSize=s;
+  const v=getVariant(selectedColor,s); if(v)currentVariantId=v.id;
+  document.querySelectorAll("#sizeRow .sz").forEach(el=>el.classList.toggle("sel",el.dataset.s===s));
+  updateVariantDisplay(true);
+}
+function onVariantChange(){ currentVariantId=parseInt($("variantSelect").value,10)||$("variantSelect").value; updateVariantDisplay(true); }
+function updateVariantDisplay(swapImg){
+  const v=curVariant(); if(!v)return;
+  if(swapImg) setImg(v.image);
+  const ph=priceHtml(v.price+SHIPPING_FLAT); $("pPrice").innerHTML=ph; $("pPrice2").innerHTML=ph;
+  const b=$("addBtn"); b.disabled=!v.inStock; b.textContent=v.inStock?"Ajouter au panier":"Rupture de stock";
+  $("buyBtn").disabled=!v.inStock;
+  const n=$("stockNote"); n.textContent=v.inStock?"En stock":"Indisponible dans cette combinaison"; n.classList.toggle("oos",!v.inStock);
+}
+function addToCart(now){
+  const v=curVariant(); if(!v||!v.inStock)return;
+  const qty=parseInt($("qty").value,10)||1, meta=[v.color,v.size].filter(Boolean).join(" / ");
+  const ex=CART.find(c=>c.variantId===v.id);
+  if(ex) ex.qty+=qty;
+  else CART.push({variantId:v.id,productId:currentProduct.id,name:currentProduct.name,meta:meta||v.name||"",image:v.image,price:v.price+SHIPPING_FLAT,qty});
+  updateCartCount(); openCart();
+  if(now) return;
 }
 
-// La case "J'ai compris" doit être cochée avant de pouvoir utiliser le bouton PayPal.
-function onReviewAckChange(){
-  const checked = document.getElementById("reviewAck").checked;
-  const container = document.getElementById("paypal-button-container");
-  if(!container) return;
-  container.classList.toggle("locked", !checked);
+/* ================= PANIER ================= */
+function updateCartCount(){ $("cartCount").textContent=CART.reduce((s,c)=>s+c.qty,0); }
+function openCart(){ renderCart(); $("cartOverlay").classList.add("open"); }
+function closeCart(){ $("cartOverlay").classList.remove("open"); }
+function removeFromCart(id){ CART=CART.filter(c=>c.variantId!==id); updateCartCount(); renderCart(); }
+function cartQty(id,d){ const c=CART.find(x=>x.variantId===id); if(!c)return; c.qty+=d; if(c.qty<1)return removeFromCart(id); updateCartCount(); renderCart(); }
+function renderCart(){
+  if(!CART.length){ $("cartBody").innerHTML='<div class="empty">Ton panier est vide.<br>Ajoute un article depuis la boutique.</div>'; $("cartFoot").innerHTML=""; return; }
+  const total=CART.reduce((s,c)=>s+c.price*c.qty,0), n=CART.reduce((s,c)=>s+c.qty,0);
+  $("cartBody").innerHTML=CART.map(c=>`
+    <div class="ci"><img src="${c.image}" alt="">
+      <div class="t"><p class="nm">${escapeHtml(c.name)}</p>${c.meta?`<p style="color:var(--muted)">${escapeHtml(c.meta)}</p>`:""}
+        <p>${priceHtml(c.price*c.qty)}</p>
+        <div class="q"><button onclick="cartQty(${c.variantId},-1)" aria-label="Moins">−</button><span>${c.qty}</span><button onclick="cartQty(${c.variantId},1)" aria-label="Plus">+</button></div>
+        <button class="rm" onclick="removeFromCart(${c.variantId})">Supprimer</button>
+      </div></div>`).join("");
+  $("cartFoot").innerHTML=`<div class="tot"><span>Total (${n} article${n>1?"s":""})</span><span>${total.toFixed(2)} ${CURRENCY}</span></div>
+    <p class="sm" style="margin:0 0 12px">Livraison et TVA incluses</p>
+    <button class="btn p" onclick="checkout()">Passer commande</button>`;
 }
-
-/* ================= PAIEMENT PAYPAL ================= */
-function renderPayPalButtons(total){
-  const container = document.getElementById("paypal-button-container");
-  if(!container) return;
-  container.innerHTML = "";
-
-  if(typeof paypal === "undefined"){
-    container.innerHTML = "";
-    const note = document.getElementById("paypalNote");
-    if(note) note.textContent = "PayPal indisponible pour le moment (vérifie ta connexion et réessaie).";
-    return;
-  }
-
-  paypal.Buttons({
-    style: { layout: "vertical", color: "gold", shape: "pill", label: "paypal" },
-
-    createOrder: function(data, actions){
-      return actions.order.create({
-        intent: "CAPTURE",
-        purchase_units: [{
-          amount: { value: total.toFixed(2), currency_code: "EUR" },
-          description: "Commande Ward DJet Shop"
-        }],
-        // Force PayPal à demander/fournir l'adresse de livraison du client,
-        // indispensable pour créer automatiquement la commande Printful.
-        application_context: { shipping_preference: "GET_FROM_FILE" }
-      });
-    },
-
-    onApprove: function(data, actions){
-      // On garde une copie du panier avant de le vider, pour la commande Printful et le récap.
-      const orderedItems = CART.slice();
-      return actions.order.capture().then(function(details){
-        // Création automatique du BROUILLON de commande chez Printful (confirm:false).
-        // Rien n'est fabriqué ni facturé tant que tu ne confirmes pas toi-même
-        // depuis le dashboard Printful.
-        return createPrintfulOrder(orderedItems, details)
-          .then(function(pfResult){
-            return getDeliveryEstimate(orderedItems, details)
-              .catch(function(){ return null; })
-              .then(function(estimate){
-                notifyStudioOfOrder(orderedItems, details, estimate, pfResult, null);
-                return { pfResult, estimate };
-              });
-          })
-          .catch(function(err){
-            // Le paiement est déjà encaissé même si Printful échoue : on garde
-            // le filet de sécurité par email pour créer la commande à la main.
-            console.error("Erreur création brouillon Printful", err);
-            notifyStudioOfOrder(orderedItems, details, null, null, err.message || String(err));
-            return { pfResult: null, estimate: null };
-          })
-          .then(function(outcome){
-            CART = [];
-            updateCartCount();
-            const body = document.getElementById("cartBody");
-            const first = (details.payer && details.payer.name && details.payer.name.given_name) || "";
-            const pfLine = outcome.pfResult
-              ? "Ta commande a été créée chez Printful, en attente de ta validation."
-              : "Ta commande sera traitée manuellement par le studio.";
-            body.innerHTML = `<div class="empty-cart">Merci ${escapeHtml(first)} ! Paiement reçu.<br>${pfLine}<br>Une confirmation te sera envoyée par email.</div>`;
-          });
-      });
-    },
-
-    onCancel: function(){
-      const note = document.getElementById("paypalNote");
-      if(note) note.textContent = "Paiement annulé — ton panier est toujours là.";
-    },
-
-    onError: function(err){
-      console.error("Erreur PayPal", err);
-      const note = document.getElementById("paypalNote");
-      if(note) note.textContent = "Une erreur est survenue avec le paiement. Réessaie, ou contacte le studio si ça persiste.";
-    }
-  }).render("#paypal-button-container");
+function checkout(){
+  const total=CART.reduce((s,c)=>s+c.price*c.qty,0);
+  const lines=CART.map(c=>`- ${c.name}${c.meta?" ("+c.meta+")":""} x${c.qty} — ${(c.price*c.qty).toFixed(2)} ${CURRENCY}`).join("%0D%0A");
+  const body=`Commande Ward DJet Shop%0D%0A%0D%0A${lines}%0D%0A%0D%0ATotal (livraison + TVA incluses) : ${total.toFixed(2)} ${CURRENCY}`;
+  window.location.href=`mailto:?subject=${encodeURIComponent("Commande Ward DJet Shop")}&body=${body}`;
 }
+document.addEventListener("keydown",e=>{ if(e.key==="Escape")closeCart(); });
 
-// Requête POST générique vers Printful (même proxy CORS que les GET).
-async function pfPost(path, payload){
-  const url = "https://api.printful.com" + path;
-  const target = PUBLIC_PROXY(url);
-  let r;
-  try{
-    r = await fetch(target, {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + PRINTFUL_TOKEN,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-  }catch(e){
-    throw new Error("réseau injoignable (" + (e.message || e) + ")");
-  }
-  const data = await r.json().catch(() => null);
-  if(!r.ok || (data && data.error)){
-    const msg = (data && data.error && data.error.message) || ("HTTP " + r.status);
-    throw new Error(msg);
-  }
-  return data;
-}
-
-// Extrait l'adresse de livraison + le nom depuis la réponse PayPal (details.capture()).
-function buildRecipientFromPayPal(details){
-  const pu = details.purchase_units && details.purchase_units[0];
-  const shipping = pu && pu.shipping;
-  const addr = shipping && shipping.address;
-  if(!addr) return null;
-  const payerName = details.payer && details.payer.name &&
-    ((details.payer.name.given_name || "") + " " + (details.payer.name.surname || "")).trim();
-  return {
-    name: (shipping.name && shipping.name.full_name) || payerName || "Client Ward DJet Shop",
-    address1: addr.address_line_1 || "",
-    address2: addr.address_line_2 || "",
-    city: addr.admin_area_2 || "",
-    state_code: addr.admin_area_1 || "",
-    country_code: addr.country_code || "",
-    zip: addr.postal_code || "",
-    email: (details.payer && details.payer.email_address) || undefined
-  };
-}
-
-// Crée un BROUILLON de commande chez Printful avec l'adresse de livraison
-// fournie par PayPal. confirm reste TOUJOURS false ici : aucune commande
-// n'est confirmée/facturée/fabriquée automatiquement — c'est le studio qui
-// confirme lui-même depuis le dashboard Printful après vérification.
-function createPrintfulOrder(items, details){
-  const recipient = buildRecipientFromPayPal(details);
-  if(!recipient){
-    return Promise.reject(new Error("PayPal n'a pas fourni d'adresse de livraison."));
-  }
-  const totalQty = items.reduce((s,c) => s + c.qty, 0);
-  const payload = {
-    recipient: recipient,
-    items: items.map(c => ({
-      sync_variant_id: c.variantId,
-      quantity: c.qty,
-      retail_price: Math.max(0, c.price - SHIPPING_FLAT).toFixed(2)
-    })),
-    retail_costs: {
-      shipping: (SHIPPING_FLAT * totalQty).toFixed(2)
-    },
-    external_id: details.id, // lie le brouillon Printful à la transaction PayPal
-    confirm: false // volontairement figé à false : jamais de confirmation auto
-  };
-  return pfPost("/orders", payload);
-}
-
-// Demande à Printful une fourchette de dates de livraison précise pour
-// l'adresse du client. Renvoie {min_delivery_date, max_delivery_date} ou null.
-function getDeliveryEstimate(items, details){
-  const recipient = buildRecipientFromPayPal(details);
-  if(!recipient) return Promise.resolve(null);
-  const payload = {
-    recipient: {
-      address1: recipient.address1,
-      city: recipient.city,
-      state_code: recipient.state_code,
-      country_code: recipient.country_code,
-      zip: recipient.zip
-    },
-    items: items.map(c => ({ sync_variant_id: c.variantId, quantity: c.qty }))
-  };
-  return pfPost("/shipping/rates", payload).then(function(res){
-    const rates = (res && res.result) || [];
-    // on privilégie le tarif standard si plusieurs méthodes sont renvoyées
-    const standard = rates.find(r => (r.shipping || "").toUpperCase() === "STANDARD") || rates[0];
-    if(!standard || !standard.min_delivery_date || !standard.max_delivery_date) return null;
-    return { min_delivery_date: standard.min_delivery_date, max_delivery_date: standard.max_delivery_date };
-  });
-}
-
-// Formate une date ISO (YYYY-MM-DD) en date lisible en français.
-function formatDeliveryDate(iso){
-  if(!iso) return "";
-  const d = new Date(iso + "T00:00:00");
-  if(isNaN(d)) return iso;
-  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
-}
-
-// Ouvre un email récap pré-rempli vers le studio avec tout ce qu'il faut pour
-// retrouver/valider la commande dans Printful après vérification.
-// Se déclenche juste après la capture du paiement PayPal.
-function notifyStudioOfOrder(items, details, estimate, pfResult, pfErrorMsg){
-  const total = items.reduce((s,c) => s + c.price*c.qty, 0);
-  const lines = items.map(c => `- ${c.name} x${c.qty} — ${(c.price*c.qty).toFixed(2)} ${CURRENCY}`).join("%0D%0A");
-  const payerEmail = (details.payer && details.payer.email_address) || "non communiqué";
-  const estimLine = estimate
-    ? `%0D%0ALivraison estimée : entre le ${estimate.min_delivery_date} et le ${estimate.max_delivery_date}.`
-    : "";
-  const addr = details.purchase_units && details.purchase_units[0] && details.purchase_units[0].shipping;
-  const addrLine = addr ? `%0D%0AAdresse : ${(addr.name && addr.name.full_name) || ""}, ${addr.address && addr.address.address_line_1 || ""} ${addr.address && addr.address.address_line_2 || ""}, ${addr.address && addr.address.postal_code || ""} ${addr.address && addr.address.admin_area_2 || ""}, ${addr.address && addr.address.country_code || ""}` : "";
-  const pfLine = (pfResult && pfResult.result)
-    ? `%0D%0A%0D%0ABrouillon Printful créé — ID ${pfResult.result.id}, statut ${pfResult.result.status}. À CONFIRMER TOI-MÊME dans le dashboard Printful.`
-    : `%0D%0A%0D%0AATTENTION : le brouillon Printful n'a PAS pu être créé automatiquement (${pfErrorMsg || "raison inconnue"}). Crée la commande manuellement dans Printful avec les infos ci-dessus.`;
-  const body = `Nouvelle commande payée via PayPal%0D%0A%0D%0A${lines}%0D%0A%0D%0ATotal : ${total.toFixed(2)} ${CURRENCY}%0D%0AEmail payeur : ${payerEmail}%0D%0AID transaction PayPal : ${details.id}${addrLine}${estimLine}${pfLine}`;
-  const link = document.createElement("a");
-  link.href = `mailto:${STUDIO_EMAIL}?subject=${encodeURIComponent("Nouvelle commande PayPal — Ward DJet Shop")}&body=${body}`;
-  link.target = "_blank";
-  link.click();
-}
-
-document.addEventListener("keydown", e => {
-  if(e.key === "Escape"){ closeProduct(); closeCart(); }
-});
-
-/* ================= NAVIGATION ENTRE PAGES ================= */
-let productsLoaded = false;
-function showPage(name){
-  document.querySelectorAll(".page").forEach(el => el.classList.remove("active"));
-  document.querySelectorAll("nav.mainnav button").forEach(el => {
-    el.classList.toggle("active", el.dataset.page === name);
-  });
-  const target = document.getElementById("page-" + name);
-  if(target) target.classList.add("active");
-  window.scrollTo({top:0, behavior:"instant"});
-  if(name === "shop" && !productsLoaded){
-    productsLoaded = true;
-    loadProducts();
-  }
-}
-
-/* ================= PAGE CONTACT ================= */
-const STUDIO_EMAIL = "ward.djet.studio@gmail.com";
-function copyStudioEmail(){
-  const btn = document.getElementById("copyEmailBtn");
-  navigator.clipboard.writeText(STUDIO_EMAIL).then(() => {
-    const old = btn.textContent;
-    btn.textContent = "Copié !";
-    setTimeout(() => { btn.textContent = old; }, 1800);
-  }).catch(() => {
-    const old = btn.textContent;
-    btn.textContent = STUDIO_EMAIL;
-    setTimeout(() => { btn.textContent = old; }, 2500);
-  });
-}
-function sendContactMessage(e){
-  e.preventDefault();
-  const name = document.getElementById("cName").value.trim();
-  const email = document.getElementById("cEmail").value.trim();
-  const message = document.getElementById("cMessage").value.trim();
-  const subject = "Message depuis le site — Ward DJet Studio";
-  const body = `Nom : ${name}%0D%0AEmail : ${email}%0D%0A%0D%0A${encodeURIComponent(message)}`;
-  window.location.href = `mailto:${STUDIO_EMAIL}?subject=${encodeURIComponent(subject)}&body=${body}`;
-}
+loadProducts();
 </script>
-
-<!-- Bannière publicitaire -->
-<div style="text-align:center;padding:16px 0;">
-  <script>
-    atOptions = {
-      'key' : 'f8f75aa5f8ba0f72ae1004d096dc85f9',
-      'format' : 'iframe',
-      'height' : 60,
-      'width' : 468,
-      'params' : {}
-    };
-  </script>
-  <script src="https://www.highperformanceformat.com/f8f75aa5f8ba0f72ae1004d096dc85f9/invoke.js"></script>
-</div>
 </body>
 </html>
