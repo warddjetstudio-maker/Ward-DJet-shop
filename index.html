@@ -162,7 +162,18 @@ const SHIPPING_FLAT = 4.90;
 const CURRENCY = "€";
 // Sans clé corsproxy.io, l'appel ne marche qu'en local. Ajoute ta clé une fois le site en ligne.
 const CORSPROXY_KEY = "";
-const PUBLIC_PROXY = (url) => "https://corsproxy.io/?url=" + encodeURIComponent(url) + (CORSPROXY_KEY ? "&key=" + CORSPROXY_KEY : "");
+// Si ton token est de niveau "compte" (et non "boutique"), mets l'ID de ta boutique Printful ici.
+const STORE_ID = "";
+const K = CORSPROXY_KEY ? "&key=" + CORSPROXY_KEY : "";
+// Essaie en cascade : appel direct, puis plusieurs proxys CORS publics (le premier qui répond est mémorisé).
+const ROUTES = [
+  u => u,
+  u => "https://corsproxy.io/?url=" + encodeURIComponent(u) + K,
+  u => "https://corsproxy.io/?" + encodeURIComponent(u) + (CORSPROXY_KEY ? "&key=" + CORSPROXY_KEY : ""),
+  u => "https://thingproxy.freeboard.io/fetch/" + u,
+  u => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u)
+];
+let goodRoute = null;
 
 let PRODUCTS = [], CART = [], lastFetchError = "";
 
@@ -172,13 +183,27 @@ function priceHtml(n){const [i,d]=n.toFixed(2).split(".");return `<span class="p
 
 /* ================= PRINTFUL ================= */
 async function pfFetch(path){
-  let r;
-  try{ r = await fetch(PUBLIC_PROXY("https://api.printful.com"+path),{headers:{Authorization:"Bearer "+PRINTFUL_TOKEN}}); }
-  catch(e){ lastFetchError="réseau injoignable ("+(e.message||e)+")"; throw new Error(lastFetchError); }
-  if(!r.ok){ lastFetchError="HTTP "+r.status+(r.status===401?" — token invalide, ou proxy sans clé hors localhost (voir CORSPROXY_KEY)":""); throw new Error(lastFetchError); }
-  const data = await r.json();
-  if(data && data.error){ lastFetchError = data.error.message || JSON.stringify(data.error); throw new Error(lastFetchError); }
-  return data;
+  const target = "https://api.printful.com" + path;
+  const headers = { Authorization: "Bearer " + PRINTFUL_TOKEN };
+  if(STORE_ID) headers["X-PF-Store-Id"] = STORE_ID;
+  const order = goodRoute ? [goodRoute, ...ROUTES.filter(r => r !== goodRoute)] : ROUTES;
+  const errs = [];
+  for(const mk of order){
+    try{
+      const r = await fetch(mk(target), { headers });
+      if(!r.ok){
+        let d = ""; try{ const j = await r.clone().json(); d = (j.error && (j.error.message || j.error)) || j.message || ""; }catch(_){}
+        errs.push("HTTP " + r.status + (d ? " " + d : "")); continue;
+      }
+      const data = await r.json();
+      if(data && data.error){ errs.push(data.error.message || JSON.stringify(data.error)); continue; }
+      if(!data || data.result === undefined){ errs.push("réponse inattendue"); continue; }
+      goodRoute = mk;
+      return data;
+    }catch(e){ errs.push(e.message || String(e)); }
+  }
+  lastFetchError = "toutes les routes ont échoué — " + [...new Set(errs)].slice(0,3).join(" | ");
+  throw new Error(lastFetchError);
 }
 
 async function loadProducts(){
@@ -195,8 +220,10 @@ async function loadProducts(){
         image:(v.files&&v.files.find(f=>f.type==="preview"))?.preview_url||sp.thumbnail_url,
         inStock:v.availability_status!=="discontinued"}))};
     }).filter(p=>p.variants.length>0);
+    try{ localStorage.setItem("wds_products", JSON.stringify(PRODUCTS)); }catch(_){}
     renderGrid();
   }catch(e){
+    try{ const c = JSON.parse(localStorage.getItem("wds_products")||"null"); if(c && c.length){ PRODUCTS = c; renderGrid(); return; } }catch(_){}
     $("grid").innerHTML='<div class="msg err">Impossible de charger le catalogue Printful.<br><small>'+escapeHtml(e.message||lastFetchError||"erreur inconnue")+'</small><br><br>Vérifie le token et que la boutique contient des produits synchronisés.</div>';
     $("countLabel").textContent="";
   }
