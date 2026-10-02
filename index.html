@@ -232,7 +232,7 @@ async function loadProducts(){
   $("grid").innerHTML='<div class="msg"><div class="spin"></div>Chargement de la collection…</div>';
   if(!PRINTFUL_TOKEN && STATIC_PRODUCTS.length){ PRODUCTS = STATIC_PRODUCTS; renderGrid(); return; }
   try{
-    const list = await pfFetch("/store/products");
+    const list = await pfFetch("/store/products?limit=100");
     const items = (list && list.result) || [];
     if(!items.length){ $("grid").innerHTML='<div class="msg">Aucun produit synchronisé dans le store Printful.</div>'; $("countLabel").textContent=""; return; }
     const details = await Promise.all(items.map(p=>pfFetch("/store/products/"+p.id).catch(()=>null)));
@@ -247,7 +247,7 @@ async function loadProducts(){
     renderGrid();
   }catch(e){
     try{ const c = JSON.parse(localStorage.getItem("wds_products")||"null"); if(c && c.length){ PRODUCTS = c; renderGrid(); return; } }catch(_){}
-    $("grid").innerHTML='<div class="msg err">Impossible de charger le catalogue Printful.<br><small>'+escapeHtml(e.message||lastFetchError||"erreur inconnue")+'</small><br><br>Vérifie l'URL du proxy, le token du Worker et que la boutique contient des produits synchronisés.</div>';
+    $("grid").innerHTML='<div class="msg err">Impossible de charger le catalogue Printful.<br><small>'+escapeHtml(e.message||lastFetchError||"erreur inconnue")+'</small><br><br>Vérifie le token Printful (scopes lecture produits) et que la boutique contient des produits synchronisés.</div>';
     $("countLabel").textContent="";
   }
 }
