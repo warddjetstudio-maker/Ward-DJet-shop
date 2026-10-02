@@ -1,4 +1,41 @@
 <!DOCTYPE html>
+<!--
+=== CODE DU PROXY (Cloudflare Worker) — à copier-coller dans Cloudflare, pas utilisé par la page ===
+// Cloudflare Worker — proxy Printful (lecture seule du catalogue)
+// Secrets à définir : PRINTFUL_TOKEN  (et optionnel : STORE_ID si token de niveau "compte")
+// Variable optionnelle : ALLOWED_ORIGIN (ex. https://ton-site.com) — par défaut "*"
+
+export default {
+  async fetch(request, env) {
+    const origin = env.ALLOWED_ORIGIN || "*";
+    const cors = {
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    };
+
+    if (request.method === "OPTIONS") return new Response(null, { headers: cors });
+    if (request.method !== "GET")
+      return new Response(JSON.stringify({ error: "Méthode non autorisée" }), { status: 405, headers: cors });
+
+    const url = new URL(request.url);
+    // Seules les routes catalogue sont autorisées
+    if (!/^\/store\/products(\/\d+)?$/.test(url.pathname))
+      return new Response(JSON.stringify({ error: "Route non autorisée" }), { status: 403, headers: { ...cors, "Content-Type": "application/json" } });
+
+    const headers = { Authorization: "Bearer " + env.PRINTFUL_TOKEN };
+    if (env.STORE_ID) headers["X-PF-Store-Id"] = env.STORE_ID;
+
+    const res = await fetch("https://api.printful.com" + url.pathname + url.search, { headers });
+    const body = await res.text();
+    return new Response(body, {
+      status: res.status,
+      headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=300" },
+    });
+  },
+};
+
+-->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -158,9 +195,9 @@ footer{background:var(--nav);color:#b9b2d3;text-align:center;padding:30px 20px;f
 <script>
 /* ================= CONFIGURATION ================= */
 // URL de ton proxy Cloudflare Worker (voir worker.js). Le token Printful reste côté serveur, jamais dans ce fichier.
-const PRINTFUL_TOKEN = "UDU9tetkTzbrGmYCA4Hz8dAMFTePb2RHJlvDOC5d";
-const PRINTFUL_STORE_ID = ""; // à remplir seulement si le token est de niveau "compte"
-const PROXY_URL = ""; // optionnel : URL d'un proxy, sinon appel direct à l'API Printful
+const PROXY_URL = "https://REMPLACE-MOI.workers.dev";
+const PRINTFUL_TOKEN = "0923e31rLcOEG3OivGOg5SLUrONYkfncUUS9Iqjt";
+const PRINTFUL_API = "https://api.printful.com";
 // Catalogue manuel de secours : si tu ne veux pas de proxy, colle ici tes produits (même format que ci-dessous).
 // Exemple : [{id:1,name:"T-shirt",thumbnail:"https://...",variants:[{id:11,name:"T-shirt / M",size:"M",color:"Noir",price:24.9,image:"https://...",inStock:true}]}]
 const STATIC_PRODUCTS = [];
@@ -176,14 +213,7 @@ function priceHtml(n){const [i,d]=n.toFixed(2).split(".");return `<span class="p
 /* ================= PRINTFUL ================= */
 async function pfFetch(path){
   try{
-    let r;
-    if(PROXY_URL){
-      r = await fetch(PROXY_URL.replace(/\/$/,"") + path);
-    }else{
-      const h = {Authorization:"Bearer "+PRINTFUL_TOKEN};
-      if(PRINTFUL_STORE_ID) h["X-PF-Store-Id"] = PRINTFUL_STORE_ID;
-      r = await fetch("https://api.printful.com" + path, {headers:h});
-    }
+    const r = await fetch(PRINTFUL_API + path, { headers:{ Authorization:"Bearer "+PRINTFUL_TOKEN } });
     const data = await r.json().catch(()=>null);
     if(!r.ok || !data || data.error){
       const d = data && data.error ? (data.error.message || data.error) : "";
@@ -193,16 +223,16 @@ async function pfFetch(path){
     if(data.result === undefined){ lastFetchError = "réponse inattendue"; throw new Error(lastFetchError); }
     return data;
   }catch(e){
-    if(e instanceof TypeError) lastFetchError = "requête bloquée (CORS ou réseau) : " + e.message;
-    throw new Error(lastFetchError || e.message);
+    lastFetchError = lastFetchError || e.message || String(e);
+    throw new Error(e.message || lastFetchError);
   }
 }
 
 async function loadProducts(){
   $("grid").innerHTML='<div class="msg"><div class="spin"></div>Chargement de la collection…</div>';
-  if(!PRINTFUL_TOKEN && !PROXY_URL && STATIC_PRODUCTS.length){ PRODUCTS = STATIC_PRODUCTS; renderGrid(); return; }
+  if(!PRINTFUL_TOKEN && STATIC_PRODUCTS.length){ PRODUCTS = STATIC_PRODUCTS; renderGrid(); return; }
   try{
-    const list = await pfFetch("/store/products?limit=100");
+    const list = await pfFetch("/store/products");
     const items = (list && list.result) || [];
     if(!items.length){ $("grid").innerHTML='<div class="msg">Aucun produit synchronisé dans le store Printful.</div>'; $("countLabel").textContent=""; return; }
     const details = await Promise.all(items.map(p=>pfFetch("/store/products/"+p.id).catch(()=>null)));
@@ -211,13 +241,13 @@ async function loadProducts(){
       return {id:sp.id,name:sp.name,thumbnail:sp.thumbnail_url,variants:vs.map(v=>({
         id:v.id,name:v.name,size:v.size||"",color:v.color||"",price:parseFloat(v.retail_price||0),
         image:(v.files&&v.files.find(f=>f.type==="preview"))?.preview_url||sp.thumbnail_url,
-        inStock:!["discontinued","out_of_stock"].includes(v.availability_status)}))};
+        inStock:v.availability_status!=="discontinued"}))};
     }).filter(p=>p.variants.length>0);
     try{ localStorage.setItem("wds_products", JSON.stringify(PRODUCTS)); }catch(_){}
     renderGrid();
   }catch(e){
     try{ const c = JSON.parse(localStorage.getItem("wds_products")||"null"); if(c && c.length){ PRODUCTS = c; renderGrid(); return; } }catch(_){}
-    $("grid").innerHTML='<div class="msg err">Impossible de charger le catalogue Printful.<br><small>'+escapeHtml(e.message||lastFetchError||"erreur inconnue")+'</small><br><br>Vérifie le token Printful et que la boutique contient des produits synchronisés.</div>';
+    $("grid").innerHTML='<div class="msg err">Impossible de charger le catalogue Printful.<br><small>'+escapeHtml(e.message||lastFetchError||"erreur inconnue")+'</small><br><br>Vérifie l'URL du proxy, le token du Worker et que la boutique contient des produits synchronisés.</div>';
     $("countLabel").textContent="";
   }
 }
