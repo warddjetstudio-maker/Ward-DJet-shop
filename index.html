@@ -211,21 +211,27 @@ function escapeHtml(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&
 function priceHtml(n){const [i,d]=n.toFixed(2).split(".");return `<span class="pr"><b>${i}</b><sup>${d}</sup>${CURRENCY}</span>`;}
 
 /* ================= PRINTFUL ================= */
+let pfRoute = 0;
 async function pfFetch(path){
-  try{
-    const r = await fetch(PRINTFUL_API + path, { headers:{ Authorization:"Bearer "+PRINTFUL_TOKEN } });
-    const data = await r.json().catch(()=>null);
-    if(!r.ok || !data || data.error){
+  const full = PRINTFUL_API + path;
+  const routes = [
+    () => fetch(full, { headers:{ Authorization:"Bearer "+PRINTFUL_TOKEN } }),
+    () => fetch("https://corsproxy.io/?url=" + encodeURIComponent(full), { headers:{ Authorization:"Bearer "+PRINTFUL_TOKEN } }),
+    () => fetch("https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(full), { headers:{ Authorization:"Bearer "+PRINTFUL_TOKEN } })
+  ];
+  let lastErr = "";
+  for(let i=pfRoute;i<routes.length;i++){
+    try{
+      const r = await routes[i]();
+      const data = await r.json().catch(()=>null);
+      if(r.ok && data && !data.error && data.result !== undefined){ pfRoute = i; return data; }
       const d = data && data.error ? (data.error.message || data.error) : "";
-      lastFetchError = "HTTP " + r.status + (d ? " — " + d : "");
-      throw new Error(lastFetchError);
-    }
-    if(data.result === undefined){ lastFetchError = "réponse inattendue"; throw new Error(lastFetchError); }
-    return data;
-  }catch(e){
-    lastFetchError = lastFetchError || e.message || String(e);
-    throw new Error(e.message || lastFetchError);
+      lastErr = "HTTP " + r.status + (d ? " — " + d : "");
+      if(r.status===401 || r.status===403) break;
+    }catch(e){ lastErr = "réseau/CORS ("+(e.message||e)+")"; }
   }
+  lastFetchError = lastErr || "erreur inconnue";
+  throw new Error(lastFetchError);
 }
 
 async function loadProducts(){
