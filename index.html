@@ -164,15 +164,16 @@ const shipCost=()=>ship.sel?+ship.sel.rate:0;
 function updTotal(){
   if(!cart.length)return;
   const tot=cart.reduce((a,i)=>a+i.price*i.q,0),cur=cart[0].cur;
-  $('#tot').textContent='Total : '+fmt(tot+shipCost(),cur)+(ship.sel?' (dont livraison '+fmt(shipCost(),ship.sel.currency||cur)+')':'');
+  $('#tot').textContent='Total : '+fmt(tot+shipCost(),cur)+(ship.sel?' (dont livraison '+fmt(shipCost(),ship.sel.currency||cur)+')':' + livraison (à calculer)');
 }
 async function calcShip(){
   const S=$('#shipbox');if(!S)return;
   ship={opts:[],sel:null};updTotal();
   if(!FV.cz.trim()||!FV.cc.trim()||FV.cy.trim().length!==2){S.innerHTML='<small>Remplis code postal, ville et pays pour calculer la livraison.</small>';return}
-  if(cart.some(i=>!i.vid)){S.innerHTML='<span class="err">Vide le panier et réajoute les articles pour calculer la livraison.</span>';return}
   const my=++shipSeq;S.innerHTML='<small>Calcul de la livraison…</small>';
   try{
+    for(const i of cart.filter(i=>!i.vid)){const v=await api('/store/variants/'+i.id);i.vid=v.result.sync_variant.variant_id;save()}
+    if(my!==shipSeq)return;
     const r=await api('/shipping/rates',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       recipient:{address1:FV.ca.trim()||'-',city:FV.cc.trim(),zip:FV.cz.trim(),country_code:FV.cy.trim().toUpperCase()},
       items:cart.map(i=>({variant_id:i.vid,quantity:i.q})),currency:cart[0].cur})});
@@ -186,33 +187,57 @@ async function calcShip(){
   }catch(e){if(my===shipSeq)S.innerHTML=`<span class="err">Livraison : ${esc(e.message)}</span>`}
 }
 function renderCart(){
-  const B=$('#cartBody');ship={opts:[],sel:null};
+  const B=$('#cartBody');ship={opts:[],sel:null};shipSeq++;
   if(!cart.length){B.innerHTML='<p class="sub" style="margin-top:10px">Panier vide.</p>';return}
   const tot=cart.reduce((a,i)=>a+i.price*i.q,0),cur=cart[0].cur;
   B.innerHTML=cart.map((i,k)=>`<div class="row"><img src="${i.img}" alt=""><div><b>${esc(i.name)}</b><br><small>${fmt(i.price,i.cur)}</small></div>
     <button data-m="${k}">−</button><span>${i.q}</span><button data-p="${k}">+</button></div>`).join('')+
-  `<div id="shipbox" style="margin:10px 0"></div><div class="price" id="tot">Total : ${fmt(tot,cur)}</div>
+  `<div id="shipbox" style="margin:10px 0"></div><button class="btn" id="calc" style="width:100%;margin-bottom:6px">Calculer la livraison</button><div class="price" id="tot">Total : ${fmt(tot,cur)}</div>
    <div class="two"><input id="cn" placeholder="Nom complet"><input id="ce" type="email" placeholder="Email"></div>
    <input id="ca" placeholder="Adresse"><div class="two"><input id="cz" placeholder="Code postal"><input id="cc" placeholder="Ville"></div>
    <input id="cy" placeholder="Pays (code, ex : FR)" value="FR" maxlength="2">
-   <button class="btn" id="order" style="width:100%">Envoyer la commande</button><div id="omsg" style="margin-top:10px"></div>`;
+   <div id="omsg" style="margin:10px 0"></div><div id="pp"></div>`;
   Object.keys(FV).forEach(k=>{const el=$('#'+k);el.value=FV[k];el.oninput=()=>{FV[k]=el.value;if(k==='cz'||k==='cc'||k==='cy'||k==='ca'){clearTimeout(shipT);shipT=setTimeout(calcShip,800)}}});
-  calcShip();
+  $('#calc').onclick=calcShip;calcShip();mountPay();
   B.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const i=cart[b.dataset.m];if(--i.q<=0)cart.splice(b.dataset.m,1);save();renderCart()});
   B.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{cart[b.dataset.p].q++;save();renderCart()});
-  $('#order').onclick=async()=>{
-    const g=s=>$(s).value.trim(),O=$('#omsg');
-    if(!g('#cn')||!g('#ca')||!g('#cc')||!g('#cz')||!g('#cy')){O.innerHTML='<span class="err">Remplis tous les champs.</span>';return}
-    if(!ship.sel){O.innerHTML='<span class="err">Choisis d\'abord un mode de livraison.</span>';return}
-    O.textContent='Envoi…';
-    try{
-      const r=await api('/orders?confirm=false',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-        recipient:{name:g('#cn'),email:g('#ce'),address1:g('#ca'),city:g('#cc'),zip:g('#cz'),country_code:g('#cy').toUpperCase()},
+}
+
+// Paiement PayPal (même Client ID que Mon Stickers Est.net)
+const PAYPAL_CLIENT_ID='BAAIcIc3OrwoaBuhLXS1ZvwYTkesL2O3SNFNRobYrna6-5D3ePI9GdhqUfj_wLVN_sCjAURBTZkEZMUDs4';
+let ppP;
+const loadPP=cur=>ppP||(ppP=new Promise((res,rej)=>{if(window.paypal)return res();const e=document.createElement('script');e.src='https://www.paypal.com/sdk/js?client-id='+PAYPAL_CLIENT_ID+'&currency='+cur+'&locale=fr_FR';e.onload=res;e.onerror=()=>{ppP=null;rej(new Error('script bloqué'))};document.head.appendChild(e)}));
+async function mountPay(){
+  const O=$('#omsg');if(!$('#pp'))return;
+  try{await loadPP(cart[0].cur);if(!window.paypal||!paypal.Buttons)throw new Error('SDK non initialisé')}catch(e){ppP=null;O.innerHTML='<span class="err">PayPal indisponible ('+esc(e.message)+')</span>';return}
+  if(!$('#pp'))return;
+  const ok=()=>FV.cn.trim()&&FV.ca.trim()&&FV.cc.trim()&&FV.cz.trim()&&FV.cy.trim().length===2&&/\S+@\S+/.test(FV.ce);
+  paypal.Buttons({
+    onClick:(d,a)=>{
+      if(!ok()){O.innerHTML='<span class="err">Remplis tous les champs (email compris).</span>';return a.reject()}
+      if(!ship.sel){O.innerHTML='<span class="err">Choisis d\'abord un mode de livraison.</span>';return a.reject()}
+      O.textContent='';
+    },
+    createOrder:(d,a)=>{
+      const tot=cart.reduce((x,i)=>x+i.price*i.q,0)+shipCost();
+      return a.order.create({purchase_units:[{description:'Ward DJet Shop',amount:{currency_code:cart[0].cur,value:(Math.round(tot*100)/100).toFixed(2)}}]});
+    },
+    onApprove:async(d,a)=>{
+      const cap=await a.order.capture(),c=cap.purchase_units?.[0]?.payments?.captures?.[0]||{},txn=c.id||d.orderID,B=$('#cartBody');
+      const body=JSON.stringify({external_id:String(txn).slice(0,32),
+        recipient:{name:FV.cn.trim(),email:FV.ce.trim(),address1:FV.ca.trim(),city:FV.cc.trim(),zip:FV.cz.trim(),country_code:FV.cy.trim().toUpperCase()},
         shipping:ship.sel.id,retail_costs:{currency:cart[0].cur,shipping:ship.sel.rate},
-        items:cart.map(i=>({sync_variant_id:i.id,quantity:i.q}))})});
-      cart=[];save();B.innerHTML=`<div class="msg">✅ Commande #${r.result.id} enregistrée (brouillon Printful). Merci !</div>`;
-    }catch(e){O.innerHTML=`<span class="err">${esc(e.message)}</span>`}
-  };
+        items:cart.map(i=>({sync_variant_id:i.id,quantity:i.q}))});
+      cart=[];save();
+      try{
+        const r=await api('/orders?confirm=false',{method:'POST',headers:{'Content-Type':'application/json'},body});
+        B.innerHTML=`<div class="msg">✅ Paiement reçu. Commande #${r.result.id} enregistrée. Merci !</div>`;
+      }catch(e){
+        B.innerHTML=`<div class="msg err">Paiement reçu (transaction ${esc(txn)}) mais la commande n'a pas pu être enregistrée : ${esc(e.message)}. Garde ce numéro de transaction.</div>`;
+      }
+    },
+    onError:e=>{O.innerHTML='<span class="err">PayPal : '+esc(e&&e.message||'erreur')+'</span>'}
+  }).render('#pp').catch(e=>{O.innerHTML='<span class="err">PayPal : '+esc(e&&e.message||'erreur')+'</span>'});
 }
 $('#openCart').onclick=()=>{renderCart();$('#mCart').classList.add('on')};
 save();
